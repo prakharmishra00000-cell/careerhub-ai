@@ -409,3 +409,24 @@ model SearchHistory {
   @@index([userId])
   @@index([createdAt])
 }
+
+model CompanyReview {
+  id           String   @id @default(cuid())
+  companyId    String
+  userId       String?
+  userName     String
+  userRole     String   @default("candidate") // candidate | employee | ex_employee | intern
+  rating       Int      // 1-5
+  title         String
+  pros         String?
+  cons         String?
+  jobTitle     String?
+  employmentStatus String? // current | former
+  workDuration String?  // e.g. "2 years"
+  isAnonymous  Boolean  @default(false)
+  helpful      Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([companyId])
+  @@index([createdAt])
+}

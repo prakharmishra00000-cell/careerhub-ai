@@ -81,6 +81,12 @@ export const api = {
     return jfetch<{ companies: CompanyListItem[]; total: number }>(`/api/companies?${p.toString()}`)
   },
   company: (id: string) => jfetch<CompanyDetails>(`/api/companies/${id}`),
+  companyReviews: (id: string, sort?: string, page?: number) =>
+    jfetch<any>(`/api/companies/${id}/reviews?sort=${sort ?? 'recent'}&page=${page ?? 1}`),
+  createCompanyReview: (companyId: string, body: any) =>
+    jfetch<{ review: any }>(`/api/companies/${companyId}/reviews`, { method: 'POST', body: JSON.stringify(body) }),
+  markReviewHelpful: (companyId: string, reviewId: string) =>
+    jfetch<{ ok: boolean }>(`/api/companies/${companyId}/reviews`, { method: 'PATCH', body: JSON.stringify({ reviewId, action: 'helpful' }) }),
 
   // recruiter
   recruiterJobs: () => jfetch<any[]>('/api/recruiter/jobs'),
@@ -109,6 +115,8 @@ export const api = {
     jfetch<any>('/api/ai/resume-analyze', { method: 'POST', body: JSON.stringify({ resumeText, targetRole }) }),
   aiMatchScore: (jobId: string) =>
     jfetch<{ summary: string; strengths: string[]; gaps: string[]; eligibilityWarnings: string[]; job: JobCardData }>('/api/ai/match-score', { method: 'POST', body: JSON.stringify({ jobId }) }),
+  aiInterviewPrep: (jobTitle: string, company?: string, skills?: string[], experienceLevel?: string) =>
+    jfetch<any>('/api/ai/interview-prep', { method: 'POST', body: JSON.stringify({ jobTitle, company, skills, experienceLevel }) }),
 
   // analytics
   salaryInsights: (params?: { branch?: string; city?: string; employmentType?: string; remoteType?: string }) => {

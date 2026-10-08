@@ -8,11 +8,22 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from '@/components/ui/dialog'
 import {
   ArrowLeft, CheckCircle2, MapPin, Layers, Users, Building, Globe,
   Building2, Briefcase, ExternalLink, Sparkles, ShieldCheck, Info,
+  Star, Plus, ThumbsUp, ThumbsDown, Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { timeAgo } from '@/lib/jobs'
 import type { CompanyDetails } from '@/lib/types'
 
 function labelize(s: string): string {
@@ -175,6 +186,9 @@ export function CompanyDetailsView() {
                 </div>
               )}
             </div>
+
+            {/* Reviews section */}
+            <CompanyReviews companyId={company.id} companyName={company.name} />
           </div>
 
           {/* Sidebar */}
@@ -302,5 +316,324 @@ function CompanySkeleton() {
         </div>
       </div>
     </div>
+  )
+}
+
+// ---------------- Company Reviews Section ----------------
+function CompanyReviews({ companyId, companyName }: { companyId: string; companyName: string }) {
+  const { user, openAuth } = useApp()
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [sort, setSort] = useState('recent')
+  const [showForm, setShowForm] = useState(false)
+  const [helpfulIds, setHelpfulIds] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      setLoading(true)
+      try {
+        const res = await api.companyReviews(companyId, sort)
+        if (active) setData(res)
+      } catch (e: any) { if (active) toast.error(e.message) }
+      finally { if (active) setLoading(false) }
+    }
+    load()
+    return () => { active = false }
+  }, [companyId, sort])
+
+  const handleHelpful = async (reviewId: string) => {
+    if (helpfulIds.has(reviewId)) return
+    setHelpfulIds((prev) => new Set(prev).add(reviewId))
+    setData((prev: any) => prev ? {
+      ...prev,
+      reviews: prev.reviews.map((r: any) => r.id === reviewId ? { ...r, helpful: r.helpful + 1 } : r),
+    } : prev)
+    try { await api.markReviewHelpful(companyId, reviewId) } catch {}
+  }
+
+  const avg = data?.avgRating ?? 0
+  const totalRatings = data?.totalRatings ?? 0
+  const distribution = data?.distribution ?? []
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-semibold tracking-tight flex items-center gap-2">
+          <Star className="size-4 text-primary" /> Reviews
+        </h2>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 text-xs gap-1.5"
+          onClick={() => { if (!user) { openAuth('login'); return } setShowForm(true) }}
+        >
+          <Plus className="size-3.5" /> Write a review
+        </Button>
+      </div>
+
+      {/* Rating summary */}
+      {loading ? (
+        <Card className="p-5"><Skeleton className="h-24" /></Card>
+      ) : totalRatings > 0 ? (
+        <Card className="p-5 mb-4">
+          <div className="flex items-center gap-6">
+            {/* Big rating */}
+            <div className="text-center shrink-0">
+              <div className="text-4xl font-bold text-primary">{avg.toFixed(1)}</div>
+              <div className="flex items-center gap-0.5 justify-center mt-1">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star key={s} className={`size-3.5 ${s <= Math.round(avg) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30'}`} />
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{totalRatings} review{totalRatings !== 1 ? 's' : ''}</p>
+            </div>
+            {/* Distribution bars */}
+            <div className="flex-1 space-y-1">
+              {distribution.map((d: any) => (
+                <div key={d.star} className="flex items-center gap-2 text-xs">
+                  <span className="w-6 text-muted-foreground flex items-center gap-0.5">{d.star}<Star className="size-2.5 fill-amber-400 text-amber-400" /></span>
+                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                      style={{ width: `${totalRatings > 0 ? (d.count / totalRatings) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <span className="w-6 text-muted-foreground text-right tabular-nums">{d.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      ) : null}
+
+      {/* Sort tabs */}
+      {totalRatings > 0 && (
+        <div className="flex items-center gap-1 mb-3">
+          {[
+            { key: 'recent', label: 'Most recent' },
+            { key: 'helpful', label: 'Most helpful' },
+            { key: 'high', label: 'Highest rated' },
+            { key: 'low', label: 'Lowest rated' },
+          ].map((s) => (
+            <button
+              key={s.key}
+              onClick={() => setSort(s.key)}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${sort === s.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'}`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Reviews list */}
+      {loading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32" />)}
+        </div>
+      ) : totalRatings === 0 ? (
+        <Card className="p-8 text-center dot-pattern">
+          <Star className="size-10 mx-auto text-muted-foreground/30 mb-3" />
+          <h3 className="font-medium mb-1">No reviews yet</h3>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">
+            Be the first to share your experience working at {companyName}.
+          </p>
+          <Button size="sm" variant="outline" onClick={() => { if (!user) { openAuth('login'); return } setShowForm(true) }}>
+            <Plus className="size-3.5 mr-1.5" /> Write the first review
+          </Button>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {data.reviews.map((r: any) => (
+            <Card key={r.id} className="p-4 hover-lift">
+              <div className="flex items-start gap-3">
+                <Avatar className="size-9 rounded-full border border-border shrink-0">
+                  <AvatarFallback className="rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                    {r.userName === 'Anonymous' ? 'A' : r.userName.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-medium">{r.userName}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star key={s} className={`size-3 ${s <= r.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30'}`} />
+                          ))}
+                        </div>
+                        <span className="text-xs text-muted-foreground">·</span>
+                        <span className="text-xs text-muted-foreground">{r.jobTitle ?? r.userRole}</span>
+                        {r.employmentStatus && (
+                          <>
+                            <span className="text-xs text-muted-foreground">·</span>
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 capitalize">{r.employmentStatus}</Badge>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground shrink-0">{timeAgo(r.createdAt)}</span>
+                  </div>
+                  <p className="text-sm font-medium mt-2">{r.title}</p>
+                  {r.pros && (
+                    <div className="mt-2 flex items-start gap-1.5 text-xs">
+                      <ThumbsUp className="size-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                      <span className="text-muted-foreground">{r.pros}</span>
+                    </div>
+                  )}
+                  {r.cons && (
+                    <div className="mt-1.5 flex items-start gap-1.5 text-xs">
+                      <ThumbsDown className="size-3.5 text-destructive shrink-0 mt-0.5" />
+                      <span className="text-muted-foreground">{r.cons}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 mt-3 pt-2 border-t border-border/50">
+                    <button
+                      onClick={() => handleHelpful(r.id)}
+                      disabled={helpfulIds.has(r.id)}
+                      className={`inline-flex items-center gap-1 text-xs transition-colors ${helpfulIds.has(r.id) ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                      <ThumbsUp className="size-3" /> Helpful ({r.helpful})
+                    </button>
+                    {r.workDuration && (
+                      <span className="text-xs text-muted-foreground">· {r.workDuration}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Write review dialog */}
+      {showForm && (
+        <ReviewFormDialog
+          companyId={companyId}
+          companyName={companyName}
+          onClose={() => setShowForm(false)}
+          onSubmitted={() => { setShowForm(false); setSort('recent') }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ---------------- Review Form Dialog ----------------
+function ReviewFormDialog({ companyId, companyName, onClose, onSubmitted }: {
+  companyId: string
+  companyName: string
+  onClose: () => void
+  onSubmitted: () => void
+}) {
+  const [rating, setRating] = useState(5)
+  const [hoverRating, setHoverRating] = useState(0)
+  const [title, setTitle] = useState('')
+  const [pros, setPros] = useState('')
+  const [cons, setCons] = useState('')
+  const [jobTitle, setJobTitle] = useState('')
+  const [employmentStatus, setEmploymentStatus] = useState('current')
+  const [workDuration, setWorkDuration] = useState('')
+  const [userRole, setUserRole] = useState('employee')
+  const [isAnonymous, setIsAnonymous] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+
+  const submit = async () => {
+    if (!title.trim()) { toast.error('Please add a review title'); return }
+    setSubmitting(true)
+    try {
+      await api.createCompanyReview(companyId, {
+        rating, title: title.trim(), pros: pros.trim() || undefined, cons: cons.trim() || undefined,
+        jobTitle: jobTitle.trim() || undefined, employmentStatus, workDuration: workDuration.trim() || undefined,
+        userRole, isAnonymous,
+      })
+      toast.success('Review submitted — thank you for sharing!')
+      onSubmitted()
+    } catch (e: any) { toast.error(e.message) }
+    finally { setSubmitting(false) }
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto scroll-thin">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Star className="size-4 text-primary" /> Review {companyName}</DialogTitle>
+          <DialogDescription>Share your experience working at {companyName}. Your review helps others make career decisions.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          {/* Star rating */}
+          <div>
+            <Label className="text-xs mb-1.5">Your rating</Label>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button
+                  key={s}
+                  onMouseEnter={() => setHoverRating(s)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  onClick={() => setRating(s)}
+                  className="p-1 transition-transform hover:scale-110"
+                >
+                  <Star className={`size-7 ${(hoverRating || rating) >= s ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/40'}`} />
+                </button>
+              ))}
+              <span className="ml-2 text-sm font-medium">{rating}/5</span>
+            </div>
+          </div>
+          {/* Title */}
+          <div>
+            <Label className="text-xs mb-1.5">Review title</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Summarize your experience" maxLength={200} />
+          </div>
+          {/* Job title */}
+          <div>
+            <Label className="text-xs mb-1.5">Your job title (optional)</Label>
+            <Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="e.g. Software Engineer" />
+          </div>
+          {/* Employment status + duration */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs mb-1.5">Employment status</Label>
+              <Select value={employmentStatus} onValueChange={setEmploymentStatus}>
+                <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="current">Currently working here</SelectItem>
+                  <SelectItem value="former">Former employee</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs mb-1.5">Work duration</Label>
+              <Input value={workDuration} onChange={(e) => setWorkDuration(e.target.value)} placeholder="e.g. 2 years" />
+            </div>
+          </div>
+          {/* Pros */}
+          <div>
+            <Label className="text-xs mb-1.5 flex items-center gap-1"><ThumbsUp className="size-3 text-emerald-500" /> Pros</Label>
+            <Textarea value={pros} onChange={(e) => setPros(e.target.value)} placeholder="What did you like about working here?" rows={2} />
+          </div>
+          {/* Cons */}
+          <div>
+            <Label className="text-xs mb-1.5 flex items-center gap-1"><ThumbsDown className="size-3 text-destructive" /> Cons</Label>
+            <Textarea value={cons} onChange={(e) => setCons(e.target.value)} placeholder="What could be improved?" rows={2} />
+          </div>
+          {/* Anonymous toggle */}
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+            <div>
+              <Label className="text-sm font-medium">Post anonymously</Label>
+              <p className="text-xs text-muted-foreground">Your name will show as "Anonymous"</p>
+            </div>
+            <Switch checked={isAnonymous} onCheckedChange={setIsAnonymous} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={submit} disabled={submitting || !title.trim()}>
+            {submitting ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <Star className="size-4 mr-1.5" />}
+            Submit review
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

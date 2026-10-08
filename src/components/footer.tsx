@@ -45,6 +45,7 @@ export function Footer() {
           <FooterCol title="AI & Tools" links={[
             { label: 'AI Career Assistant', view: 'career-ai' as const },
             { label: 'Resume analyzer', view: 'resume' as const },
+            { label: 'Interview Prep', view: 'interview-prep' as const },
             { label: 'Recruiter portal', view: 'recruiter' as const },
             { label: 'Admin', view: 'admin' as const },
           ]} />

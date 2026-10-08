@@ -642,3 +642,83 @@ CareerHub AI is a mature, production-grade SPA with 18+ views, 40+ API routes, A
 3. **Interview prep feature**: Add an AI-powered interview question generator for specific job titles
 4. **Career roadmap**: AI-generated career path visualization based on the candidate's profile
 5. **Saved jobs folder management**: Allow creating custom folders and drag-to-organize
+
+---
+Task ID: 24
+Agent: main (cron round 5)
+Task: Company reviews system, AI interview prep feature, styling polish
+
+## Current Project Status Assessment
+CareerHub AI is a mature, feature-rich SPA with 18+ views, 45+ API routes, AI matching, job comparison, salary insights, onboarding wizard, recruiter application management, personalized recommendations, and search history. This round added two major new features: a full company reviews system and an AI-powered interview prep tool.
+
+## Completed Modifications
+
+### 1. Company Reviews System (full-stack)
+- **New Prisma model**: `CompanyReview` (id, companyId, userId, userName, userRole, rating 1-5, title, pros, cons, jobTitle, employmentStatus, workDuration, isAnonymous, helpful, createdAt) with indexes
+- **New API**: `GET/POST/PATCH /api/companies/[id]/reviews`
+  - GET: returns reviews with sort (recent/helpful/high/low), pagination, average rating, and rating distribution (5-star breakdown)
+  - POST: creates a review (auth-aware, validates rating 1-5 and title required, supports anonymous posts)
+  - PATCH: mark a review as "helpful" (increments helpful count)
+- **Seed data**: 7 realistic reviews across 5 companies (TechVedika, Nimbus, Fintech PE, GreenGrid, MediCore, DRDO) with varied ratings, pros/cons, job titles, employment statuses
+- **API client**: `api.companyReviews()`, `api.createCompanyReview()`, `api.markReviewHelpful()`
+- **UI** (`CompanyReviews` component in company-details.tsx):
+  - Rating summary card: large average rating (e.g., 4.2), star display, total count, 5-star distribution bars with animated widths
+  - Sort tabs: Most recent / Most helpful / Highest rated / Lowest rated
+  - Review cards: avatar, name, star rating, job title + employment status badge, title, pros (with ThumbsUp icon, emerald), cons (with ThumbsDown icon, destructive), "Helpful" button with count, work duration
+  - Empty state with dot-pattern background and "Write the first review" CTA
+  - "Write a review" button (auth-gated)
+- **Review form dialog** (`ReviewFormDialog`):
+  - Interactive 5-star rating selector with hover preview
+  - Fields: title, job title, employment status (current/former), work duration, pros, cons, anonymous toggle
+  - Validation + loading state + toast feedback
+  - Auto-refreshes reviews on submission
+
+### 2. AI-Powered Interview Prep (full-stack)
+- **New API**: `POST /api/ai/interview-prep` — uses z-ai-web-dev-sdk to generate a comprehensive interview prep guide
+  - Input: jobTitle, company (optional), skills (array), experienceLevel
+  - Output: strict JSON with overview, 5 technical questions (with topic/difficulty/hint), 5 behavioral questions (with STAR framework tip), topics to review, tips, red flags, salary negotiation tip
+  - Defensive JSON parsing (strips markdown fences, regex fallback)
+- **API client**: `api.aiInterviewPrep(jobTitle, company?, skills?, experienceLevel?)`
+- **New view**: `InterviewPrepView` at `#interview-prep`
+  - Header with Brain icon, gradient background, input form (job title, company, experience level, skills)
+  - Prefills from candidate's profile (desiredJobTitle, technicalSkills, experienceKind)
+  - Popular roles quick-pick (12 roles: Software Engineer, Data Scientist, Product Manager, etc.)
+  - Feature description cards (Technical questions, Behavioral questions, Topics & tips)
+  - Results rendering:
+    - Overview card (gradient background, Lightbulb icon)
+    - Technical questions card: expandable items with Q number, difficulty badge (emerald/amber/destructive), topic badge, expandable hint
+    - Behavioral questions card: expandable items with STAR framework badge, expandable tip
+    - Topics to review: chip badges (primary color)
+    - Tips for success: numbered list with emerald badges
+    - Things to avoid: list with destructive AlertTriangle icons
+    - Salary negotiation tip: gradient emerald card
+    - "Generate again" button
+  - Loading skeletons, empty state
+- **Wired into**: top-nav (Brain icon), footer, command palette (with keywords "questions preparation practice tips")
+
+### 3. Styling Polish
+- Company reviews use `hover-lift` class for interactive card feedback
+- Review cards have `dot-pattern` empty state background
+- Interview prep uses gradient backgrounds for overview and salary cards
+- Expandable question items with smooth transitions
+- Color-coded difficulty badges (emerald=easy, amber=medium, destructive=hard)
+
+## Verification Results
+- `bun run lint` → clean (0 errors, 0 warnings) ✅
+- **Company Reviews API**: TechVedika has 3 reviews, Nimbus has 1, Fintech PE has 1 — all seeded ✅
+- **Interview Prep API**: generates overview + 5 technical questions + 5 behavioral questions + 8 topics + 7 tips + 4 red flags + salary negotiation tip ✅
+- **Interview Prep UI**: renders form with job title, company, experience level, skills, and generate button ✅
+- **Company Reviews UI**: renders reviews section with "Reviews" header and "Write a review" button ✅
+- All new views wired into app-shell, top-nav, footer, command palette ✅
+
+## Unresolved Issues / Risks
+1. **Server stability**: Dev server continues to be reaped between bash commands. Code verified via API calls and individual screenshots.
+2. **Reviews loading**: The reviews section renders the header immediately but the review cards load asynchronously — may appear empty in fast screenshots. Verified via API that 3 reviews exist for TechVedika.
+3. **Interview prep LLM latency**: The AI generates the full prep guide in one call (~5-10s). No streaming implementation yet.
+
+## Priority Recommendations for Next Phase
+1. **Career roadmap feature**: AI-generated career path visualization based on candidate's profile
+2. **Job alert email preview**: Show a preview of what an alert email would look like
+3. **Saved jobs folder management**: Allow creating custom folders and drag-to-organize
+4. **Company comparison**: Compare companies side-by-side (like job comparison)
+5. **Interview prep history**: Save generated prep guides for later review

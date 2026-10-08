@@ -35,6 +35,7 @@ export type View =
   | 'freshers'
   | 'government-jobs'
   | 'salary-insights'
+  | 'interview-prep'
 
 export interface SessionUser {
   id: string
