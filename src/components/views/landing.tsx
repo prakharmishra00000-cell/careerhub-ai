@@ -1,11 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useApp } from '@/lib/store'
+import { api } from '@/lib/api'
 import { SearchBar } from '@/components/search-bar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from '@/components/ui/accordion'
@@ -13,7 +16,10 @@ import { ClientOnly } from '@/components/client-only'
 import {
   Compass, Sparkles, Building2, Bot, FileText, ClipboardList, Bell, ShieldCheck,
   ArrowRight, CheckCircle2, Zap, Filter, Globe, GraduationCap, Briefcase, Trophy, Users, BarChart3, Lock, Cpu, Search, TrendingUp,
+  MapPin,
 } from 'lucide-react'
+import { formatSalary, formatStipend } from '@/lib/jobs'
+import type { JobCardData } from '@/lib/types'
 
 const sources = ['LinkedIn', 'Indeed', 'Naukri', 'Internshala', 'Unstop', 'Wellfound', 'Glassdoor', 'Company Websites', 'Government Portals']
 
@@ -122,6 +128,9 @@ export function LandingView() {
           </div>
         </div>
       </section>
+
+      {/* ===== TRENDING JOBS ===== */}
+      <TrendingJobs />
 
       {/* ===== TRUSTED SOURCES ===== */}
       <section className="border-y border-border bg-card/30">
@@ -274,5 +283,96 @@ export function LandingView() {
         </div>
       </section>
     </div>
+  )
+}
+
+// ---------------- Trending Jobs Section ----------------
+function TrendingJobs() {
+  const { setView, setFilter, runSearch } = useApp()
+  const [jobs, setJobs] = useState<JobCardData[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      setLoading(true)
+      try {
+        // Trending = jobs with highest view counts
+        const res = await api.jobs({ sort: 'newest', pageSize: 8 })
+        if (active) {
+          // Sort by viewCount descending on the client
+          const sorted = [...res.jobs].sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0)).slice(0, 4)
+          setJobs(sorted)
+        }
+      } catch {}
+      finally { if (active) setLoading(false) }
+    }
+    load()
+    return () => { active = false }
+  }, [])
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <div className="size-8 rounded-lg bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center">
+            <TrendingUp className="size-4 text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">Trending now</h2>
+            <p className="text-xs text-muted-foreground">Most viewed opportunities this week</p>
+          </div>
+        </div>
+        <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setView('search'); runSearch() }}>
+          View all <ArrowRight className="size-3.5" />
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40 rounded-xl" />)}
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 fade-in-stagger">
+          {jobs.map((job) => (
+            <button
+              key={job.id}
+              onClick={() => useApp.getState().openJob(job.id)}
+              className="text-left group"
+            >
+              <Card className="p-4 h-full card-hover border-border/70 hover:border-primary/30 relative overflow-hidden">
+                {/* Trending rank badge */}
+                <div className="absolute top-2 right-2 size-6 rounded-full bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center text-white text-[10px] font-bold">
+                  🔥
+                </div>
+                <div className="flex items-start gap-2.5 mb-3">
+                  <Avatar className="size-9 rounded-lg border border-border shrink-0">
+                    <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-xs font-semibold">
+                      {job.companyName.split(' ').slice(0, 2).map((w) => w[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-sm leading-tight group-hover:text-primary transition-colors line-clamp-2">{job.title}</h3>
+                    <p className="text-xs text-muted-foreground truncate">{job.companyName}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mb-2">
+                  {job.city && <span className="inline-flex items-center gap-0.5"><MapPin className="size-3" />{job.city}</span>}
+                  {job.remoteType && <span>· {job.remoteType.replace(/_/g, ' ')}</span>}
+                </div>
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
+                  <span className="text-sm font-semibold text-primary">
+                    {job.isInternship
+                      ? formatStipend(job.stipendMin, job.stipendMax, job.internshipPaid)
+                      : formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency, job.salaryPeriod, job.salaryDisclosed)}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">{job.viewCount ?? 0} views</span>
+                </div>
+              </Card>
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }

@@ -117,6 +117,8 @@ export const api = {
     jfetch<{ summary: string; strengths: string[]; gaps: string[]; eligibilityWarnings: string[]; job: JobCardData }>('/api/ai/match-score', { method: 'POST', body: JSON.stringify({ jobId }) }),
   aiInterviewPrep: (jobTitle: string, company?: string, skills?: string[], experienceLevel?: string) =>
     jfetch<any>('/api/ai/interview-prep', { method: 'POST', body: JSON.stringify({ jobTitle, company, skills, experienceLevel }) }),
+  aiCareerRoadmap: (body: { currentRole?: string; targetRole?: string; timeline?: string }) =>
+    jfetch<any>('/api/ai/career-roadmap', { method: 'POST', body: JSON.stringify(body) }),
 
   // analytics
   salaryInsights: (params?: { branch?: string; city?: string; employmentType?: string; remoteType?: string }) => {

@@ -12,7 +12,7 @@ import type { View } from '@/lib/types'
 import {
   Search, Home, Briefcase, GraduationCap, Globe, Sparkles, ShieldCheck, Building2,
   LayoutDashboard, User as UserIcon, Bookmark, ClipboardList, Bell, FileText, Bot,
-  Compass, ArrowRight, CornerDownLeft, Sun, Moon, Settings, LogOut, Plus, Bell as BellIcon, TrendingUp, Brain,
+  Compass, ArrowRight, CornerDownLeft, Sun, Moon, Settings, LogOut, Plus, Bell as BellIcon, TrendingUp, Brain, Map,
 } from 'lucide-react'
 
 interface CommandItem {
@@ -71,6 +71,7 @@ export function CommandPalette() {
       { id: 'nav-companies', label: 'Companies directory', icon: Building2, group: 'Navigate', action: () => go('companies') },
       { id: 'nav-salary', label: 'Salary Insights', icon: TrendingUp, group: 'Navigate', action: () => go('salary-insights'), keywords: 'analytics compensation pay' },
       { id: 'nav-interview', label: 'Interview Prep', icon: Brain, group: 'Navigate', action: () => go('interview-prep'), keywords: 'questions preparation practice tips' },
+      { id: 'nav-roadmap', label: 'Career Roadmap', icon: Map, group: 'Navigate', action: () => go('career-roadmap'), keywords: 'career path milestones growth plan' },
       { id: 'nav-ai', label: 'AI Career Assistant', icon: Bot, group: 'Navigate', action: () => go('career-ai'), keywords: 'chat search natural language' },
       { id: 'nav-resume', label: 'Resume tools', icon: FileText, group: 'Navigate', action: () => go('resume'), keywords: 'analyzer builder ats' },
     ]

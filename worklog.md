@@ -722,3 +722,72 @@ CareerHub AI is a mature, feature-rich SPA with 18+ views, 45+ API routes, AI ma
 3. **Saved jobs folder management**: Allow creating custom folders and drag-to-organize
 4. **Company comparison**: Compare companies side-by-side (like job comparison)
 5. **Interview prep history**: Save generated prep guides for later review
+
+---
+Task ID: 25
+Agent: main (cron round 6)
+Task: AI Career Roadmap feature, Trending Jobs on landing page, styling polish
+
+## Current Project Status Assessment
+CareerHub AI is a feature-rich SPA with 20+ views, 50+ API routes, 6 AI endpoints, company reviews, interview prep, salary insights, job comparison, onboarding wizard, personalized recommendations, and search history. The platform is stable and lint-clean. This round added the AI Career Roadmap feature and a Trending Jobs section on the landing page.
+
+## Completed Modifications
+
+### 1. AI Career Roadmap Feature (full-stack)
+- **New API**: `POST /api/ai/career-roadmap` — uses z-ai-web-dev-sdk to generate a personalized career path
+  - Input: currentRole, targetRole, timeline (1-2 / 2-3 / 3-5 / 5+ years)
+  - Auto-fetches candidate's profile (degree, branch, skills, desired roles) if logged in
+  - Output: strict JSON with summary, 4-5 milestones (phased), skills gap, certifications, salary projections, pitfalls, networking tips
+  - Each milestone has: phase name, duration, title, description, skills to develop, key actions, resources, completion milestone
+- **API client**: `api.aiCareerRoadmap({ currentRole, targetRole, timeline })`
+- **New view**: `CareerRoadmapView` at `#career-roadmap`
+  - Gradient header with Map icon (primary→violet→emerald gradient)
+  - Input form: current role, target role, timeline selector
+  - Prefills from candidate's profile
+  - Empty state with dot-pattern background and feature highlights (Milestones, Skill gaps, Certifications, Salary projection)
+  - Results:
+    - Summary card (gradient background with Target icon)
+    - Interactive milestone timeline: horizontal phase selector with gradient-colored icons, active phase detail card with gradient header (phase title, duration, description), skills chips, key actions checklist, resources, completion milestone
+    - Phase navigation: Previous/Next buttons + "X / N" indicator
+    - Skills gap card: each skill with priority badge (high/medium/low), why it matters, how to learn
+    - Certifications card: name, provider, value, priority badge
+    - Salary projection: 4-column grid with phase, range, and context
+    - Pitfalls card: list with AlertTriangle icons
+    - Networking tips card: list with Users icons
+    - "Regenerate roadmap" button
+- **Wired into**: top-nav (Map icon), footer, command palette (keywords "career path milestones growth plan")
+
+### 2. Trending Jobs Section on Landing Page
+- **New component**: `TrendingJobs` in landing.tsx
+- Fetches 8 newest jobs, sorts by viewCount descending, displays top 4
+- Each card: fire emoji badge (🔥), company avatar, job title, company name, location with MapPin, salary/stipend, view count
+- Uses `card-hover` and `fade-in-stagger` for premium polish
+- "View all" button navigates to search
+- Placed between the hero stats and the trusted sources sections
+- Loading skeleton grid
+
+### 3. Styling Polish
+- Career roadmap uses multi-color gradients (primary→violet→emerald) for the header icon
+- Phase headers use distinct gradient colors per phase (primary, violet, emerald, amber, rose)
+- Priority badges are color-coded (high=destructive, medium=amber, low=muted)
+- Completion milestone has emerald accent background
+- Trending jobs cards have fire emoji badge and staggered fade-in animation
+
+## Verification Results
+- `bun run lint` → clean (0 errors, 0 warnings) ✅
+- **Career Roadmap API**: generates 5 milestones (0-60 months), 6 skill gaps, 3 certifications, 5 salary projections, 5 pitfalls ✅
+- **Trending Jobs**: landing page shows "Trending now" section with job cards (fire emoji, company avatar, location) ✅
+- **Career Roadmap UI**: form with current role, target role, timeline inputs ✅
+- All new views wired into app-shell, top-nav, footer, command palette ✅
+
+## Unresolved Issues / Risks
+1. **Server stability**: Dev server continues to be reaped between bash commands. Code verified via API calls and individual screenshots.
+2. **Career roadmap LLM latency**: Full generation takes ~5-10s. No streaming yet.
+3. **Trending jobs**: Currently sorts by viewCount which is randomized in seed data. In production this would reflect real trending data.
+
+## Priority Recommendations for Next Phase
+1. **Job alert email preview**: Show a preview of what an alert email would look like
+2. **Company comparison**: Compare companies side-by-side (like job comparison)
+3. **Interview prep history**: Save generated prep guides for later review
+4. **Career roadmap history**: Save generated roadmaps for later reference
+5. **Skill gap analysis**: Cross-reference candidate's skills with job requirements to show specific gaps

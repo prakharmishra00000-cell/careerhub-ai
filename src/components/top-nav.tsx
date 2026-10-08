@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { NotificationsBell } from '@/components/notifications-bell'
 import {
   Briefcase, GraduationCap, Globe, Sparkles, Building2, LayoutDashboard, Bookmark,
-  ClipboardList, Bell, FileText, Bot, Settings, LogOut, Menu, Sun, Moon, Search, User as UserIcon, ShieldCheck, Compass, TrendingUp, Brain,
+  ClipboardList, Bell, FileText, Bot, Settings, LogOut, Menu, Sun, Moon, Search, User as UserIcon, ShieldCheck, Compass, TrendingUp, Brain, Map,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
@@ -25,6 +25,7 @@ const navLinks = [
   { label: 'Companies', view: 'companies' as const, icon: Building2 },
   { label: 'Salary Insights', view: 'salary-insights' as const, icon: TrendingUp },
   { label: 'Interview Prep', view: 'interview-prep' as const, icon: Brain },
+  { label: 'Career Roadmap', view: 'career-roadmap' as const, icon: Map },
 ]
 
 export function TopNav() {
