@@ -22,6 +22,7 @@ import { TopNav } from '@/components/top-nav'
 import { MobileBottomNav } from '@/components/mobile-bottom-nav'
 import { Footer } from '@/components/footer'
 import { AuthModal } from '@/components/auth-modal'
+import { CommandPalette } from '@/components/command-palette'
 
 export function AppShell() {
   const view = useApp((s) => s.view)
@@ -139,6 +140,7 @@ export function AppShell() {
       <Footer />
       <MobileBottomNav />
       <AuthModal />
+      <CommandPalette />
     </div>
   )
 }

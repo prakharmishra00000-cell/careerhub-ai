@@ -82,7 +82,7 @@ export function TopNav() {
           {/* Right actions */}
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => go('search')}
+              onClick={() => { if (typeof window !== 'undefined') { const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true, bubbles: true }); window.dispatchEvent(e) } else { go('search') } }}
               className="hidden md:inline-flex items-center gap-2 h-9 px-3 rounded-full border border-border bg-card text-sm text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors"
               aria-label="Search jobs"
             >

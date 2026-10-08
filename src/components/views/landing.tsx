@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card'
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from '@/components/ui/accordion'
+import { ClientOnly } from '@/components/client-only'
 import {
   Compass, Sparkles, Building2, Bot, FileText, ClipboardList, Bell, ShieldCheck,
   ArrowRight, CheckCircle2, Zap, Filter, Globe, GraduationCap, Briefcase, Trophy, Users, BarChart3, Lock, Cpu, Search, TrendingUp,
@@ -236,14 +237,16 @@ export function LandingView() {
         <div className="text-center mb-10">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Frequently asked questions</h2>
         </div>
-        <Accordion type="single" collapsible className="w-full">
-          {faqs.map((f, i) => (
-            <AccordionItem key={i} value={`item-${i}`} className="border-border">
-              <AccordionTrigger className="text-left text-[15px] font-medium py-4 hover:no-underline">{f.q}</AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-4">{f.a}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <ClientOnly>
+          <Accordion type="single" collapsible className="w-full">
+            {faqs.map((f, i) => (
+              <AccordionItem key={i} value={`item-${i}`} className="border-border">
+                <AccordionTrigger className="text-left text-[15px] font-medium py-4 hover:no-underline">{f.q}</AccordionTrigger>
+                <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-4">{f.a}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </ClientOnly>
       </section>
 
       {/* ===== CTA ===== */}

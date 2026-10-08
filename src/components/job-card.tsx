@@ -45,9 +45,14 @@ export function JobCard({ job, variant = 'default', saved: savedProp, onOpen }: 
 
   return (
     <Card
-      className="card-hover relative p-0 overflow-hidden cursor-pointer group border-border/70 hover:border-primary/30"
+      className={`card-hover relative p-0 overflow-hidden cursor-pointer group border-border/70 hover:border-primary/30 ${closingSoon ? 'border-l-2 border-l-amber-500/50' : ''}`}
       onClick={() => (onOpen ? onOpen() : openJob(job.id))}
     >
+      {job.isInternship && (
+        <div className="absolute top-0 right-0 px-2 py-0.5 text-[10px] font-semibold text-violet-600 dark:text-violet-300 bg-violet-500/10 rounded-bl-lg">
+          INTERNSHIP
+        </div>
+      )}
       <div className="p-4 sm:p-5">
         <div className="flex items-start gap-3">
           <Avatar className="size-11 rounded-xl border border-border bg-muted shrink-0">
