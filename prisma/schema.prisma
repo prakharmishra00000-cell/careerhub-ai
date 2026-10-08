@@ -1,0 +1,399 @@
+// CareerHub AI — Prisma schema
+// Aggregator/discovery platform for jobs, internships, apprenticeships, fellowships.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// USERS & AUTH
+// ============================================================
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String?
+  name          String
+  avatarUrl     String?
+  role          String   @default("candidate") // candidate | recruiter | company_admin | admin | moderator
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastLoginAt   DateTime?
+
+  profile       Profile?
+  savedJobs     SavedJob[]
+  applications   Application[]
+  alerts        JobAlert[]
+  notifications Notification[]
+  reports       JobReport[]
+  resumes       ResumeVersion[]
+  // Recruiter-side
+  postedJobs     Job[]       @relation("RecruiterJobs")
+  companyMembers CompanyMember[]
+  // Admin audit
+  auditLogs     AuditLog[]  @relation("AuditActor")
+
+  @@index([role])
+}
+
+model Profile {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Personal
+  headline            String?
+  phone               String?
+  currentLocation     String?
+  preferredLocations  String?
+  dateOfBirth         String?
+  gender              String?
+
+  // Education summary
+  highestQualification String?
+  degree              String?
+  specialization      String?
+  branch              String?
+  university          String?
+  college             String?
+  graduationYear      Int?
+  cgpa                Float?
+  percentage          Float?
+  backlogs            Int      @default(0)
+  activeBacklogs      Int      @default(0)
+  gapYears            Int      @default(0)
+
+  // Experience summary
+  experienceKind      String?  // fresher | internship | fulltime | freelance | parttime | apprenticeship
+  totalExperienceYears Float?
+
+  // Career preferences
+  desiredJobTitle     String?
+  desiredRoles        String?
+  industries          String?
+  salaryExpectationMin Int?
+  salaryExpectationMax Int?
+  employmentType      String?
+  remotePreference    String?  // remote | hybrid | onsite | any
+  willingToRelocate   Boolean  @default(false)
+  shiftPreference     String?
+
+  // Skills (comma-separated for SQLite simplicity)
+  technicalSkills     String?
+  softSkills          String?
+  tools               String?
+  certifications      String?
+
+  // Portfolio
+  githubUrl           String?
+  linkedinUrl         String?
+  portfolioUrl        String?
+  behanceUrl          String?
+  dribbbleUrl         String?
+  kaggleUrl           String?
+  researchgateUrl     String?
+
+  resumeUrl           String?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([graduationYear])
+}
+
+// ============================================================
+// COMPANIES
+// ============================================================
+
+model Company {
+  id            String   @id @default(cuid())
+  name          String
+  logoUrl       String?
+  website       String?
+  industry      String?
+  companySize   String?  // 1-10 | 11-50 | 51-200 | 201-500 | 501-1000 | 1001-5000 | 5000+
+  companyType   String?  // startup | mnc | government | psu | ngo | consulting | product | service | agency | research | university
+  headquarters  String?
+  description   String?
+  verified      Boolean  @default(false)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  jobs           Job[]
+  members        CompanyMember[]
+  reportedCount  Int      @default(0)
+
+  @@index([industry])
+  @@index([companyType])
+}
+
+model CompanyMember {
+  id        String   @id @default(cuid())
+  companyId String
+  userId    String
+  role      String   @default("recruiter") // recruiter | company_admin
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([companyId, userId])
+}
+
+// ============================================================
+// JOB SOURCES (modular adapter architecture)
+// ============================================================
+
+model JobSource {
+  id              String   @id @default(cuid())
+  name            String   @unique   // LinkedIn | Indeed | Naukri | Internshala | Unstop | CompanyWebsite | GovernmentPortal ...
+  kind            String   @default("api") // api | rss | feed | partner | manual | company_provided | permitted_crawler
+  baseUrl         String?
+  logoUrl         String?
+  description     String?
+  enabled         Boolean  @default(true)
+  syncFrequency   String   @default("hourly") // realtime | hourly | daily | weekly
+  parserVersion   String   @default("1.0.0")
+  // health
+  lastSyncAt      DateTime?
+  lastSuccessAt   DateTime?
+  lastErrorAt     DateTime?
+  lastErrorMessage String?
+  jobsFetched     Int      @default(0)
+  jobsUpdated     Int      @default(0)
+  jobsFailed      Int      @default(0)
+  errorRate       Float    @default(0)
+  quotaUsed       Int      @default(0)
+  quotaLimit      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  jobs            Job[]
+
+  @@index([enabled])
+}
+
+// ============================================================
+// JOBS (normalized schema)
+// ============================================================
+
+model Job {
+  id              String   @id @default(cuid())
+
+  // source attribution
+  sourceId        String?
+  source          JobSource? @relation(fields: [sourceId], references: [id])
+  sourceJobId     String?
+  sourceUrl       String?
+
+  // company
+  companyId       String?
+  company         Company?  @relation(fields: [companyId], references: [id])
+  companyName     String
+  companyLogoUrl  String?
+
+  // core content
+  title           String
+  slug            String
+  description     String
+  responsibilities String?
+  requirements    String?
+
+  // location
+  location        String?
+  country         String?
+  state           String?
+  city            String?
+  remoteType      String?  // remote | hybrid | onsite | work_from_home
+
+  // employment
+  employmentType  String?  // full_time | part_time | contract | temporary | freelance | internship | apprenticeship | trainee | graduate_program | management_trainee | work_study | volunteer | fellowship | research | coop
+
+  // experience
+  experienceMin   Int?
+  experienceMax   Int?
+  fresherFriendly Boolean  @default(false)
+
+  // salary
+  salaryMin       Int?
+  salaryMax       Int?
+  salaryCurrency  String   @default("INR")
+  salaryPeriod    String?  // annual | monthly | hourly | daily
+  salaryDisclosed Boolean  @default(false)
+
+  // education eligibility
+  education       String?
+  degree          String?
+  branch          String?
+  specialization  String?
+  cgpaRequirement Float?
+  cgpaExplicitNone Boolean @default(false)
+  percentageRequirement Float?
+  backlogPolicy   String?  // allowed | not_allowed | not_specified | current_allowed | previous_allowed
+  backlogMaxCount Int?
+
+  // skills (comma-separated)
+  skills          String?
+
+  // internship
+  isInternship    Boolean  @default(false)
+  internshipDurationMonths Int?
+  internshipPaid  String?  // paid | unpaid | stipend_not_disclosed
+  stipendMin      Int?
+  stipendMax      Int?
+  ppoAvailable    Boolean  @default(false)
+
+  // benefits / extras (comma-separated)
+  benefits        String?
+
+  // dates
+  postedAt        DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  expiresAt       DateTime?
+  applicationDeadline DateTime?
+  lastVerifiedAt  DateTime?
+  status          String   @default("active") // active | expired | draft | closed
+
+  // recruiter
+  postedById      String?
+  postedBy        User?    @relation("RecruiterJobs", fields: [postedById], references: [id])
+
+  // flags
+  isDemo          Boolean  @default(false)
+  applicationCount Int     @default(0)
+  viewCount       Int     @default(0)
+  sourceClickCount Int     @default(0)
+
+  savedBy         SavedJob[]
+  applications    Application[]
+  reports         JobReport[]
+
+  createdAt       DateTime @default(now())
+
+  @@index([status])
+  @@index([employmentType])
+  @@index([city])
+  @@index([degree])
+  @@index([branch])
+  @@index([fresherFriendly])
+  @@index([isInternship])
+  @@index([remoteType])
+  @@index([postedAt])
+  @@index([salaryMin])
+  @@index([companyId])
+  @@index([sourceId])
+}
+
+// ============================================================
+// CANDIDATE ENGAGEMENT
+// ============================================================
+
+model SavedJob {
+  id        String   @id @default(cuid())
+  userId    String
+  jobId     String
+  folder    String   @default("default") // high_priority | apply_today | internship | full_time | remote | government | custom:*
+  notes     String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([userId, folder])
+}
+
+model Application {
+  id          String   @id @default(cuid())
+  userId      String
+  jobId       String
+  status      String   @default("applied") // saved | applied | assessment | interview | offer | rejected | withdrawn
+  appliedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deadline    DateTime?
+  interviewDate DateTime?
+  notes       String?
+  source      String?  // which source the user clicked "Apply on"
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([userId, status])
+}
+
+model JobAlert {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String
+  query        String   // serialized filter state (JSON)
+  frequency     String   @default("daily") // instant | daily | weekly
+  channels     String   @default("in_app") // in_app | email | in_app,email
+  paused       Boolean  @default(false)
+  lastTriggeredAt DateTime?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, paused])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // new_match | closing_soon | saved_updated | application_reminder | interview_reminder | profile_completion | resume_suggestion | system
+  title     String
+  body      String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model JobReport {
+  id        String   @id @default(cuid())
+  jobId     String
+  userId    String?
+  reason    String   // expired | fake | incorrect_info | wrong_salary | wrong_eligibility | duplicate | broken_link | scam
+  details   String?
+  status    String   @default("open") // open | reviewed | resolved
+  createdAt DateTime @default(now())
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+}
+
+model ResumeVersion {
+  id        String   @id @default(cuid())
+  userId    String
+  fileName  String
+  fileUrl   String?
+  content   String?  // extracted text
+  score     Int?
+  analysis  String?  // JSON string of analysis
+  isLatest  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String?
+  entityId  String?
+  metadata  String?
+  createdAt DateTime @default(now())
+  actor     User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([createdAt])
+}

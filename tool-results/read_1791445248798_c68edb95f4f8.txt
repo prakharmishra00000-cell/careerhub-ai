@@ -1,0 +1,805 @@
+     1→'use client'
+     2→
+     3→import { useEffect, useMemo, useState } from 'react'
+     4→import { useApp } from '@/lib/store'
+     5→import { api } from '@/lib/api'
+     6→import { Card } from '@/components/ui/card'
+     7→import { Button } from '@/components/ui/button'
+     8→import { Badge } from '@/components/ui/badge'
+     9→import { Skeleton } from '@/components/ui/skeleton'
+    10→import { Input } from '@/components/ui/input'
+    11→import { Label } from '@/components/ui/label'
+    12→import { Textarea } from '@/components/ui/textarea'
+    13→import { Switch } from '@/components/ui/switch'
+    14→import { Progress } from '@/components/ui/progress'
+    15→import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+    16→import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
+    17→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+    18→import {
+    19→  GraduationCap, Briefcase, Sparkles, Link as LinkIcon, FileText, User as UserIcon,
+    20→  Target, Pencil, Check, Loader2, ExternalLink, Info,
+    21→} from 'lucide-react'
+    22→import { toast } from 'sonner'
+    23→import { DEGREES, BRANCHES, profileCompletionPct } from '@/lib/jobs'
+    24→import type { ProfileData } from '@/lib/types'
+    25→
+    26→type SectionKey =
+    27→  | 'personal' | 'education' | 'experience' | 'skills'
+    28→  | 'preferences' | 'portfolio' | 'resume'
+    29→
+    30→const SECTIONS: { key: SectionKey; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    31→  { key: 'personal', label: 'Personal', icon: UserIcon },
+    32→  { key: 'education', label: 'Education', icon: GraduationCap },
+    33→  { key: 'experience', label: 'Experience', icon: Briefcase },
+    34→  { key: 'skills', label: 'Skills', icon: Sparkles },
+    35→  { key: 'preferences', label: 'Preferences', icon: Target },
+    36→  { key: 'portfolio', label: 'Portfolio', icon: LinkIcon },
+    37→  { key: 'resume', label: 'Resume', icon: FileText },
+    38→]
+    39→
+    40→const HIGHEST_QUALIFICATIONS = ['High School', 'Diploma', 'ITI', 'Polytechnic', 'Undergraduate', 'Postgraduate', 'Doctorate', 'Other'] as const
+    41→const GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'] as const
+    42→const EXPERIENCE_KINDS = [
+    43→  { value: 'fresher', label: 'Fresher (no full-time experience)' },
+    44→  { value: 'experienced', label: 'Experienced professional' },
+    45→  { value: 'intern', label: 'Intern / Student' },
+    46→  { value: 'gap', label: 'Career gap / returning' },
+    47→] as const
+    48→const EMPLOYMENT_OPTIONS = ['full_time', 'part_time', 'contract', 'internship', 'apprenticeship', 'freelance', 'graduate_program', 'management_trainee']
+    49→const REMOTE_OPTIONS = ['remote', 'hybrid', 'onsite', 'work_from_home', 'no_preference']
+    50→const SHIFT_OPTIONS = ['day', 'night', 'rotating', 'flexible', 'any']
+    51→
+    52→function csvToList(s: string | null | undefined): string[] {
+    53→  if (!s) return []
+    54→  return s.split(',').map((x) => x.trim()).filter(Boolean)
+    55→}
+    56→
+    57→function listToCsv(arr: string[]): string {
+    58→  return arr.join(', ')
+    59→}
+    60→
+    61→function orDash(v: any): string {
+    62→  if (v === null || v === undefined || v === '') return 'Not specified'
+    63→  if (typeof v === 'number' && v === 0) return 'Not specified'
+    64→  return String(v)
+    65→}
+    66→
+    67→function CompletionRing({ value, size = 96 }: { value: number; size?: number }) {
+    68→  const stroke = 8
+    69→  const r = (size - stroke) / 2
+    70→  const c = 2 * Math.PI * r
+    71→  const offset = c - (value / 100) * c
+    72→  return (
+    73→    <svg width={size} height={size} className="shrink-0 -rotate-90">
+    74→      <circle cx={size / 2} cy={size / 2} r={r} stroke="currentColor" strokeWidth={stroke} className="text-muted/40" fill="none" />
+    75→      <circle
+    76→        cx={size / 2} cy={size / 2} r={r}
+    77→        stroke="currentColor" strokeWidth={stroke} fill="none"
+    78→        className="text-primary transition-all duration-500"
+    79→        strokeDasharray={c}
+    80→        strokeDashoffset={offset}
+    81→        strokeLinecap="round"
+    82→      />
+    83→    </svg>
+    84→  )
+    85→}
+    86→
+    87→export function ProfileView() {
+    88→  const user = useApp((s) => s.user)
+    89→  const setView = useApp((s) => s.setView)
+    90→
+    91→  const [loading, setLoading] = useState(true)
+    92→  const [saving, setSaving] = useState(false)
+    93→  const [profile, setProfile] = useState<ProfileData | null>(null)
+    94→  const [editing, setEditing] = useState<SectionKey | null>(null)
+    95→
+    96→  useEffect(() => {
+    97→    let active = true
+    98→    const load = async () => {
+    99→      setLoading(true)
+   100→      try {
+   101→        const p = await api.getProfile()
+   102→        if (active) setProfile(p)
+   103→      } catch (e: any) {
+   104→        if (active) toast.error(e.message || 'Could not load profile')
+   105→      } finally {
+   106→        if (active) setLoading(false)
+   107→      }
+   108→    }
+   109→    load()
+   110→    return () => { active = false }
+   111→  }, [])
+   112→
+   113→  const completion = useMemo(() => (profile ? profileCompletionPct(profile) : 0), [profile])
+   114→
+   115→  const handleSave = async (section: SectionKey, data: Partial<ProfileData>) => {
+   116→    setSaving(true)
+   117→    try {
+   118→      const updated = await api.updateProfile(data)
+   119→      setProfile(updated)
+   120→      setEditing(null)
+   121→      toast.success('Profile updated')
+   122→    } catch (e: any) {
+   123→      toast.error(e.message || 'Could not save changes')
+   124→    } finally {
+   125→      setSaving(false)
+   126→    }
+   127→  }
+   128→
+   129→  // Suggestions for completion
+   130→  const suggestions: string[] = []
+   131→  if (profile) {
+   132→    if (!profile.resumeUrl) suggestions.push('Add your resume to boost match accuracy by ~30%.')
+   133→    if (!profile.linkedinUrl) suggestions.push('Link your LinkedIn to help recruiters find you.')
+   134→    if (!profile.technicalSkills) suggestions.push('Add technical skills to surface in recruiter search.')
+   135→    if (!profile.desiredJobTitle) suggestions.push('Specify your desired job title for personalized recommendations.')
+   136→    if (!profile.preferredLocations) suggestions.push('Add preferred locations to refine your job matches.')
+   137→    if (!profile.githubUrl && !profile.portfolioUrl) suggestions.push('Showcase work with a GitHub or portfolio link.')
+   138→  }
+   139→
+   140→  if (loading) {
+   141→    return (
+   142→      <div className="flex-1 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+   143→        <div className="space-y-6">
+   144→          <Skeleton className="h-32 rounded-2xl" />
+   145→          <Skeleton className="h-64 rounded-2xl" />
+   146→          <Skeleton className="h-64 rounded-2xl" />
+   147→        </div>
+   148→      </div>
+   149→    )
+   150→  }
+   151→
+   152→  if (!profile) {
+   153→    return (
+   154→      <div className="flex-1 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+   155→        <Card className="p-12 border-dashed text-center">
+   156→          <h2 className="text-lg font-semibold mb-2">Could not load your profile</h2>
+   157→          <p className="text-sm text-muted-foreground mb-4">There was a problem fetching your profile. Please try again.</p>
+   158→          <Button onClick={() => window.location.reload()}>Retry</Button>
+   159→        </Card>
+   160→      </div>
+   161→    )
+   162→  }
+   163→
+   164→  return (
+   165→    <div className="flex-1 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+   166→      {/* Header card */}
+   167→      <Card className="p-6 mb-6 overflow-hidden relative border-border/70">
+   168→        <div className="absolute inset-0 hero-grid opacity-20 pointer-events-none" />
+   169→        <div className="relative flex flex-col sm:flex-row sm:items-center gap-5">
+   170→          <div className="relative shrink-0">
+   171→            <CompletionRing value={completion} />
+   172→            <div className="absolute inset-0 flex flex-col items-center justify-center">
+   173→              <span className="text-2xl font-bold tracking-tight">{completion}%</span>
+   174→              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">complete</span>
+   175→            </div>
+   176→          </div>
+   177→          <div className="flex-1 min-w-0">
+   178→            <div className="flex items-center gap-3">
+   179→              <Avatar className="size-10 rounded-xl border border-border">
+   180→                <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-semibold text-sm">
+   181→                  {user?.name?.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase() ?? 'U'}
+   182→                </AvatarFallback>
+   183→              </Avatar>
+   184→              <div className="min-w-0">
+   185→                <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">{user?.name ?? 'Your profile'}</h1>
+   186→                <p className="text-sm text-muted-foreground truncate">
+   187→                  {profile?.headline || 'Add a headline to stand out to recruiters'}
+   188→                </p>
+   189→              </div>
+   190→            </div>
+   191→            <div className="mt-3 flex flex-wrap items-center gap-3">
+   192→              <Progress value={completion} className="h-1.5 max-w-sm flex-1" />
+   193→              <span className="text-xs text-muted-foreground">
+   194→                {completion >= 100 ? 'Profile complete' : completion >= 70 ? 'Almost there' : completion >= 40 ? 'Keep going' : 'Just getting started'}
+   195→              </span>
+   196→            </div>
+   197→          </div>
+   198→        </div>
+   199→
+   200→        {suggestions.length > 0 && (
+   201→          <div className="relative mt-5 pt-5 border-t border-border/60">
+   202→            <div className="flex items-start gap-2">
+   203→              <Info className="size-4 text-primary shrink-0 mt-0.5" />
+   204→              <div>
+   205→                <p className="text-sm font-medium">Boost your profile</p>
+   206→                <ul className="mt-1.5 space-y-1 text-xs text-muted-foreground">
+   207→                  {suggestions.slice(0, 3).map((s, i) => (
+   208→                    <li key={i} className="flex items-start gap-1.5">
+   209→                      <span className="text-primary">·</span>
+   210→                      <span>{s}</span>
+   211→                    </li>
+   212→                  ))}
+   213→                </ul>
+   214→              </div>
+   215→            </div>
+   216→          </div>
+   217→        )}
+   218→      </Card>
+   219→
+   220→      {/* Sections grid */}
+   221→      <div className="grid gap-5">
+   222→        <PersonalSection profile={profile} onEdit={() => setEditing('personal')} />
+   223→        <EducationSection profile={profile} onEdit={() => setEditing('education')} />
+   224→        <ExperienceSection profile={profile} onEdit={() => setEditing('experience')} />
+   225→        <SkillsSection profile={profile} onEdit={() => setEditing('skills')} />
+   226→        <PreferencesSection profile={profile} onEdit={() => setEditing('preferences')} />
+   227→        <PortfolioSection profile={profile} onEdit={() => setEditing('portfolio')} />
+   228→        <ResumeSection profile={profile} onEdit={() => setEditing('resume')} />
+   229→      </div>
+   230→
+   231→      {/* Edit dialogs */}
+   232→      {editing === 'personal' && (
+   233→        <PersonalDialog
+   234→          profile={profile!} saving={saving}
+   235→          onClose={() => setEditing(null)}
+   236→          onSave={(d) => handleSave('personal', d)}
+   237→        />
+   238→      )}
+   239→      {editing === 'education' && (
+   240→        <EducationDialog
+   241→          profile={profile!} saving={saving}
+   242→          onClose={() => setEditing(null)}
+   243→          onSave={(d) => handleSave('education', d)}
+   244→        />
+   245→      )}
+   246→      {editing === 'experience' && (
+   247→        <ExperienceDialog
+   248→          profile={profile!} saving={saving}
+   249→          onClose={() => setEditing(null)}
+   250→          onSave={(d) => handleSave('experience', d)}
+   251→        />
+   252→      )}
+   253→      {editing === 'skills' && (
+   254→        <SkillsDialog
+   255→          profile={profile!} saving={saving}
+   256→          onClose={() => setEditing(null)}
+   257→          onSave={(d) => handleSave('skills', d)}
+   258→        />
+   259→      )}
+   260→      {editing === 'preferences' && (
+   261→        <PreferencesDialog
+   262→          profile={profile!} saving={saving}
+   263→          onClose={() => setEditing(null)}
+   264→          onSave={(d) => handleSave('preferences', d)}
+   265→        />
+   266→      )}
+   267→      {editing === 'portfolio' && (
+   268→        <PortfolioDialog
+   269→          profile={profile!} saving={saving}
+   270→          onClose={() => setEditing(null)}
+   271→          onSave={(d) => handleSave('portfolio', d)}
+   272→        />
+   273→      )}
+   274→      {editing === 'resume' && (
+   275→        <ResumeDialog
+   276→          profile={profile!} saving={saving}
+   277→          onClose={() => setEditing(null)}
+   278→          onSave={(d) => handleSave('resume', d)}
+   279→        />
+   280→      )}
+   281→
+   282→      {/* footer hint */}
+   283→      <p className="mt-8 text-center text-xs text-muted-foreground">
+   284→        Tip: a complete profile improves match accuracy and surfaces you in recruiter searches.
+   285→        {' '}
+   286→        <button onClick={() => setView('dashboard')} className="text-primary hover:underline">Back to dashboard</button>
+   287→      </p>
+   288→    </div>
+   289→  )
+   290→}
+   291→
+   292→/* ---------- Section card wrapper ---------- */
+   293→function SectionCard({
+   294→  title, subtitle, icon: Icon, onEdit, children,
+   295→}: {
+   296→  title: string
+   297→  subtitle: string
+   298→  icon: React.ComponentType<{ className?: string }>
+   299→  onEdit: () => void
+   300→  children: React.ReactNode
+   301→}) {
+   302→  return (
+   303→    <Card className="border-border/70">
+   304→      <div className="flex items-start justify-between p-5 pb-3">
+   305→        <div className="flex items-start gap-3 min-w-0">
+   306→          <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+   307→            <Icon className="size-5 text-primary" />
+   308→          </div>
+   309→          <div className="min-w-0">
+   310→            <h2 className="font-semibold text-base">{title}</h2>
+   311→            <p className="text-xs text-muted-foreground">{subtitle}</p>
+   312→          </div>
+   313→        </div>
+   314→        <Button variant="outline" size="sm" onClick={onEdit} className="shrink-0">
+   315→          <Pencil className="size-3.5" /> Edit
+   316→        </Button>
+   317→      </div>
+   318→      <div className="px-5 pb-5">{children}</div>
+   319→    </Card>
+   320→  )
+   321→}
+   322→
+   323→function Field({ label, value }: { label: string; value: React.ReactNode }) {
+   324→  return (
+   325→    <div>
+   326→      <dt className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">{label}</dt>
+   327→      <dd className="mt-0.5 text-sm">{value}</dd>
+   328→    </div>
+   329→  )
+   330→}
+   331→
+   332→function TagList({ items, emptyLabel = 'Not specified' }: { items: string[]; emptyLabel?: string }) {
+   333→  if (items.length === 0) return <span className="text-sm text-muted-foreground">{emptyLabel}</span>
+   334→  return (
+   335→    <div className="flex flex-wrap gap-1.5">
+   336→      {items.map((s) => (
+   337→        <Badge key={s} variant="secondary" className="text-xs font-normal bg-muted text-foreground/80">
+   338→          {s}
+   339→        </Badge>
+   340→      ))}
+   341→    </div>
+   342→  )
+   343→}
+   344→
+   345→/* ---------- Display sections ---------- */
+   346→function PersonalSection({ profile, onEdit }: { profile: ProfileData | null; onEdit: () => void }) {
+   347→  return (
+   348→    <SectionCard title="Personal information" subtitle="How recruiters will identify and reach you" icon={UserIcon} onEdit={onEdit}>
+   349→      <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-4">
+   350→        <Field label="Headline" value={orDash(profile?.headline)} />
+   351→        <Field label="Phone" value={orDash(profile?.phone)} />
+   352→        <Field label="Current location" value={orDash(profile?.currentLocation)} />
+   353→        <Field label="Preferred locations" value={orDash(profile?.preferredLocations)} />
+   354→      </dl>
+   355→    </SectionCard>
+   356→  )
+   357→}
+   358→
+   359→function EducationSection({ profile, onEdit }: { profile: ProfileData | null; onEdit: () => void }) {
+   360→  return (
+   361→    <SectionCard title="Education" subtitle="Your highest qualification and academic record" icon={GraduationCap} onEdit={onEdit}>
+   362→      <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-4">
+   363→        <Field label="Highest qualification" value={orDash(profile?.highestQualification)} />
+   364→        <Field label="Degree" value={orDash(profile?.degree)} />
+   365→        <Field label="Branch / Specialization" value={orDash(profile?.specialization || profile?.branch)} />
+   366→        <Field label="University" value={orDash(profile?.university)} />
+   367→        <Field label="College" value={orDash(profile?.college)} />
+   368→        <Field label="Graduation year" value={orDash(profile?.graduationYear)} />
+   369→        <Field label="CGPA" value={profile?.cgpa ? String(profile.cgpa) : 'Not specified'} />
+   370→        <Field label="Percentage" value={profile?.percentage ? `${profile.percentage}%` : 'Not specified'} />
+   371→        <Field label="Backlogs" value={profile?.backlogs ? String(profile.backlogs) : '0'} />
+   372→        <Field label="Active backlogs" value={profile?.activeBacklogs ? String(profile.activeBacklogs) : '0'} />
+   373→        <Field label="Gap years" value={profile?.gapYears ? String(profile.gapYears) : '0'} />
+   374→      </dl>
+   375→    </SectionCard>
+   376→  )
+   377→}
+   378→
+   379→function ExperienceSection({ profile, onEdit }: { profile: ProfileData | null; onEdit: () => void }) {
+   380→  const kindLabel = profile?.experienceKind
+   381→    ? EXPERIENCE_KINDS.find((k) => k.value === profile.experienceKind)?.label ?? profile.experienceKind
+   382→    : 'Not specified'
+   383→  return (
+   384→    <SectionCard title="Experience" subtitle="Your career stage and total experience" icon={Briefcase} onEdit={onEdit}>
+   385→      <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-4">
+   386→        <Field label="Experience kind" value={kindLabel} />
+   387→        <Field label="Total experience (years)" value={orDash(profile?.totalExperienceYears)} />
+   388→      </dl>
+   389→    </SectionCard>
+   390→  )
+   391→}
+   392→
+   393→function SkillsSection({ profile, onEdit }: { profile: ProfileData | null; onEdit: () => void }) {
+   394→  return (
+   395→    <SectionCard title="Skills & certifications" subtitle="Technical, soft, tools and certifications" icon={Sparkles} onEdit={onEdit}>
+   396→      <div className="space-y-4">
+   397→        <div>
+   398→          <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-2">Technical skills</p>
+   399→          <TagList items={csvToList(profile?.technicalSkills)} />
+   400→        </div>
+   401→        <div>
+   402→          <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-2">Soft skills</p>
+   403→          <TagList items={csvToList(profile?.softSkills)} />
+   404→        </div>
+   405→        <div>
+   406→          <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-2">Tools</p>
+   407→          <TagList items={csvToList(profile?.tools)} />
+   408→        </div>
+   409→        <div>
+   410→          <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-2">Certifications</p>
+   411→          <TagList items={csvToList(profile?.certifications)} />
+   412→        </div>
+   413→      </div>
+   414→    </SectionCard>
+   415→  )
+   416→}
+   417→
+   418→function PreferencesSection({ profile, onEdit }: { profile: ProfileData | null; onEdit: () => void }) {
+   419→  const empLabel = (v: string | null | undefined) => v ? v.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : 'Not specified'
+   420→  return (
+   421→    <SectionCard title="Career preferences" subtitle="What you're looking for in your next role" icon={Target} onEdit={onEdit}>
+   422→      <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-4">
+   423→        <Field label="Desired job title" value={orDash(profile?.desiredJobTitle)} />
+   424→        <Field label="Desired roles" value={orDash(profile?.desiredRoles)} />
+   425→        <Field label="Industries" value={orDash(profile?.industries)} />
+   426→        <Field label="Salary expectation" value={
+   427→          profile?.salaryExpectationMin != null || profile?.salaryExpectationMax != null
+   428→            ? `₹${profile?.salaryExpectationMin ?? 0} – ₹${profile?.salaryExpectationMax ?? 0} LPA`
+   429→            : 'Not specified'
+   430→        } />
+   431→        <Field label="Employment type" value={empLabel(profile?.employmentType)} />
+   432→        <Field label="Remote preference" value={empLabel(profile?.remotePreference)} />
+   433→        <Field label="Willing to relocate" value={profile?.willingToRelocate ? 'Yes' : 'No'} />
+   434→        <Field label="Shift preference" value={empLabel(profile?.shiftPreference)} />
+   435→      </dl>
+   436→    </SectionCard>
+   437→  )
+   438→}
+   439→
+   440→function PortfolioSection({ profile, onEdit }: { profile: ProfileData | null; onEdit: () => void }) {
+   441→  const links = [
+   442→    { label: 'GitHub', url: profile?.githubUrl },
+   443→    { label: 'LinkedIn', url: profile?.linkedinUrl },
+   444→    { label: 'Portfolio', url: profile?.portfolioUrl },
+   445→    { label: 'Behance', url: profile?.behanceUrl },
+   446→    { label: 'Dribbble', url: profile?.dribbbleUrl },
+   447→    { label: 'Kaggle', url: profile?.kaggleUrl },
+   448→    { label: 'ResearchGate', url: profile?.researchgateUrl },
+   449→  ].filter((l) => l.url)
+   450→  return (
+   451→    <SectionCard title="Portfolio & links" subtitle="Showcase your work across platforms" icon={LinkIcon} onEdit={onEdit}>
+   452→      {links.length === 0 ? (
+   453→        <p className="text-sm text-muted-foreground">Not specified</p>
+   454→      ) : (
+   455→        <div className="grid sm:grid-cols-2 gap-2">
+   456→          {links.map((l) => (
+   457→            <a
+   458→              key={l.label}
+   459→              href={l.url!}
+   460→              target="_blank"
+   461→              rel="noopener noreferrer"
+   462→              className="inline-flex items-center gap-2 text-sm text-primary hover:underline truncate"
+   463→            >
+   464→              <ExternalLink className="size-3.5 shrink-0" />
+   465→              <span className="truncate">{l.label}: {l.url}</span>
+   466→            </a>
+   467→          ))}
+   468→        </div>
+   469→      )}
+   470→    </SectionCard>
+   471→  )
+   472→}
+   473→
+   474→function ResumeSection({ profile, onEdit }: { profile: ProfileData | null; onEdit: () => void }) {
+   475→  return (
+   476→    <SectionCard title="Resume" subtitle="Your latest resume link" icon={FileText} onEdit={onEdit}>
+   477→      {profile?.resumeUrl ? (
+   478→        <a href={profile.resumeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+   479→          <ExternalLink className="size-3.5" />
+   480→          {profile.resumeUrl}
+   481→        </a>
+   482→      ) : (
+   483→        <div className="flex items-start gap-3">
+   484→          <div className="size-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+   485→            <Info className="size-4 text-amber-600 dark:text-amber-400" />
+   486→          </div>
+   487→          <div>
+   488→            <p className="text-sm font-medium">Not uploaded</p>
+   489→            <p className="text-xs text-muted-foreground mt-0.5">Add your resume to boost match accuracy by ~30%.</p>
+   490→          </div>
+   491→        </div>
+   492→      )}
+   493→    </SectionCard>
+   494→  )
+   495→}
+   496→
+   497→/* ---------- Dialog primitives ---------- */
+   498→function DialogShell({
+   499→  title, onClose, onSave, saving, children, description,
+   500→}: {
+   501→  title: string
+   502→  description?: string
+   503→  onClose: () => void
+   504→  onSave: () => void
+   505→  saving: boolean
+   506→  children: React.ReactNode
+   507→}) {
+   508→  return (
+   509→    <Dialog open onOpenChange={(o) => { if (!o) onClose() }}>
+   510→      <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
+   511→        <DialogHeader>
+   512→          <DialogTitle>{title}</DialogTitle>
+   513→          {description && <DialogDescription>{description}</DialogDescription>}
+   514→        </DialogHeader>
+   515→        <div className="space-y-4 py-2">{children}</div>
+   516→        <DialogFooter>
+   517→          <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+   518→          <Button onClick={onSave} disabled={saving}>
+   519→            {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+   520→            Save changes
+   521→          </Button>
+   522→        </DialogFooter>
+   523→      </DialogContent>
+   524→    </Dialog>
+   525→  )
+   526→}
+   527→
+   528→function TextInput({ label, value, onChange, placeholder, type = 'text' }: {
+   529→  label: string
+   530→  value: string
+   531→  onChange: (v: string) => void
+   532→  placeholder?: string
+   533→  type?: string
+   534→}) {
+   535→  return (
+   536→    <div className="space-y-1.5">
+   537→      <Label>{label}</Label>
+   538→      <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+   539→    </div>
+   540→  )
+   541→}
+   542→
+   543→function NumberInput({ label, value, onChange, placeholder }: {
+   544→  label: string
+   545→  value: number | string
+   546→  onChange: (v: number | null) => void
+   547→  placeholder?: string
+   548→}) {
+   549→  return (
+   550→    <div className="space-y-1.5">
+   551→      <Label>{label}</Label>
+   552→      <Input
+   553→        type="number"
+   554→        value={value ?? ''}
+   555→        onChange={(e) => {
+   556→          const v = e.target.value
+   557→          onChange(v === '' ? null : Number(v))
+   558→        }}
+   559→        placeholder={placeholder}
+   560→      />
+   561→    </div>
+   562→  )
+   563→}
+   564→
+   565→function SelectInput({ label, value, onChange, options }: {
+   566→  label: string
+   567→  value: string
+   568→  onChange: (v: string) => void
+   569→  options: { value: string; label: string }[]
+   570→}) {
+   571→  return (
+   572→    <div className="space-y-1.5">
+   573→      <Label>{label}</Label>
+   574→      <Select value={value || '__none'} onValueChange={(v) => onChange(v === '__none' ? '' : v)}>
+   575→        <SelectTrigger className="w-full"><SelectValue placeholder="Select…" /></SelectTrigger>
+   576→        <SelectContent>
+   577→          <SelectItem value="__none" className="text-muted-foreground">Not specified</SelectItem>
+   578→          {options.map((o) => (
+   579→            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+   580→          ))}
+   581→        </SelectContent>
+   582→      </Select>
+   583→    </div>
+   584→  )
+   585→}
+   586→
+   587→function CommaInput({ label, value, onChange, placeholder }: {
+   588→  label: string
+   589→  value: string
+   590→  onChange: (v: string) => void
+   591→  placeholder?: string
+   592→}) {
+   593→  return (
+   594→    <div className="space-y-1.5">
+   595→      <Label>{label}</Label>
+   596→      <Textarea
+   597→        value={value}
+   598→        onChange={(e) => onChange(e.target.value)}
+   599→        placeholder={placeholder ?? 'Comma-separated values…'}
+   600→        rows={2}
+   601→      />
+   602→      <p className="text-[11px] text-muted-foreground">Separate with commas. Rendered as tag chips.</p>
+   603→    </div>
+   604→  )
+   605→}
+   606→
+   607→/* ---------- Edit dialogs ---------- */
+   608→function PersonalDialog({ profile, onClose, onSave, saving }: {
+   609→  profile: ProfileData
+   610→  onClose: () => void
+   611→  onSave: (d: Partial<ProfileData>) => void
+   612→  saving: boolean
+   613→}) {
+   614→  const [headline, setHeadline] = useState(profile.headline ?? '')
+   615→  const [phone, setPhone] = useState(profile.phone ?? '')
+   616→  const [currentLocation, setCurrentLocation] = useState(profile.currentLocation ?? '')
+   617→  const [preferredLocations, setPreferredLocations] = useState(profile.preferredLocations ?? '')
+   618→  return (
+   619→    <DialogShell title="Edit personal information" description="Recruiters see this at the top of your profile." onClose={onClose} onSave={() => onSave({ headline, phone, currentLocation, preferredLocations })} saving={saving}>
+   620→      <TextInput label="Headline" value={headline} onChange={setHeadline} placeholder="e.g. BTech CSE final-year student seeking SDE internships" />
+   621→      <TextInput label="Phone" value={phone} onChange={setPhone} placeholder="e.g. +91 9876543210" />
+   622→      <TextInput label="Current location" value={currentLocation} onChange={setCurrentLocation} placeholder="e.g. Bangalore, India" />
+   623→      <CommaInput label="Preferred locations" value={preferredLocations} onChange={setPreferredLocations} placeholder="e.g. Bangalore, Pune, Remote" />
+   624→    </DialogShell>
+   625→  )
+   626→}
+   627→
+   628→function EducationDialog({ profile, onClose, onSave, saving }: {
+   629→  profile: ProfileData
+   630→  onClose: () => void
+   631→  onSave: (d: Partial<ProfileData>) => void
+   632→  saving: boolean
+   633→}) {
+   634→  const [highestQualification, setHighest] = useState(profile.highestQualification ?? '')
+   635→  const [degree, setDegree] = useState(profile.degree ?? '')
+   636→  const [specialization, setSpecialization] = useState(profile.specialization ?? '')
+   637→  const [branch, setBranch] = useState(profile.branch ?? '')
+   638→  const [university, setUniversity] = useState(profile.university ?? '')
+   639→  const [college, setCollege] = useState(profile.college ?? '')
+   640→  const [graduationYear, setGraduationYear] = useState<number | null>(profile.graduationYear)
+   641→  const [cgpa, setCgpa] = useState<number | null>(profile.cgpa)
+   642→  const [percentage, setPercentage] = useState<number | null>(profile.percentage)
+   643→  const [backlogs, setBacklogs] = useState<number>(profile.backlogs ?? 0)
+   644→  const [activeBacklogs, setActiveBacklogs] = useState<number>(profile.activeBacklogs ?? 0)
+   645→  const [gapYears, setGapYears] = useState<number>(profile.gapYears ?? 0)
+   646→  return (
+   647→    <DialogShell title="Edit education" description="Your academic background drives match accuracy." onClose={onClose} onSave={() => onSave({
+   648→      highestQualification, degree, specialization, branch, university, college,
+   649→      graduationYear, cgpa, percentage, backlogs, activeBacklogs, gapYears,
+   650→    })} saving={saving}>
+   651→      <div className="grid sm:grid-cols-2 gap-3">
+   652→        <SelectInput label="Highest qualification" value={highestQualification} onChange={setHighest}
+   653→          options={HIGHEST_QUALIFICATIONS.map((q) => ({ value: q, label: q }))} />
+   654→        <SelectInput label="Degree" value={degree} onChange={setDegree}
+   655→          options={DEGREES.map((d) => ({ value: d, label: d }))} />
+   656→        <TextInput label="Specialization" value={specialization} onChange={setSpecialization} placeholder="e.g. Machine Learning" />
+   657→        <SelectInput label="Branch" value={branch} onChange={setBranch}
+   658→          options={BRANCHES.map((b) => ({ value: b, label: b }))} />
+   659→        <TextInput label="University" value={university} onChange={setUniversity} placeholder="e.g. VTU" />
+   660→        <TextInput label="College" value={college} onChange={setCollege} placeholder="e.g. RV College of Engineering" />
+   661→        <NumberInput label="Graduation year" value={graduationYear ?? ''} onChange={setGraduationYear} placeholder="e.g. 2025" />
+   662→        <NumberInput label="CGPA" value={cgpa ?? ''} onChange={setCgpa} placeholder="e.g. 8.5" />
+   663→        <NumberInput label="Percentage" value={percentage ?? ''} onChange={setPercentage} placeholder="e.g. 85" />
+   664→        <NumberInput label="Backlogs" value={backlogs} onChange={(v) => setBacklogs(v ?? 0)} placeholder="0" />
+   665→        <NumberInput label="Active backlogs" value={activeBacklogs} onChange={(v) => setActiveBacklogs(v ?? 0)} placeholder="0" />
+   666→        <NumberInput label="Gap years" value={gapYears} onChange={(v) => setGapYears(v ?? 0)} placeholder="0" />
+   667→      </div>
+   668→    </DialogShell>
+   669→  )
+   670→}
+   671→
+   672→function ExperienceDialog({ profile, onClose, onSave, saving }: {
+   673→  profile: ProfileData
+   674→  onClose: () => void
+   675→  onSave: (d: Partial<ProfileData>) => void
+   676→  saving: boolean
+   677→}) {
+   678→  const [experienceKind, setKind] = useState(profile.experienceKind ?? '')
+   679→  const [totalExperienceYears, setYears] = useState<number | null>(profile.totalExperienceYears)
+   680→  return (
+   681→    <DialogShell title="Edit experience" description="Tell us where you are in your career." onClose={onClose} onSave={() => onSave({ experienceKind, totalExperienceYears })} saving={saving}>
+   682→      <SelectInput label="Experience kind" value={experienceKind} onChange={setKind}
+   683→        options={EXPERIENCE_KINDS.map((k) => ({ value: k.value, label: k.label }))} />
+   684→      <NumberInput label="Total experience (years)" value={totalExperienceYears ?? ''} onChange={setYears} placeholder="e.g. 2" />
+   685→    </DialogShell>
+   686→  )
+   687→}
+   688→
+   689→function SkillsDialog({ profile, onClose, onSave, saving }: {
+   690→  profile: ProfileData
+   691→  onClose: () => void
+   692→  onSave: (d: Partial<ProfileData>) => void
+   693→  saving: boolean
+   694→}) {
+   695→  const [technicalSkills, setTechnical] = useState(profile.technicalSkills ?? '')
+   696→  const [softSkills, setSoft] = useState(profile.softSkills ?? '')
+   697→  const [tools, setTools] = useState(profile.tools ?? '')
+   698→  const [certifications, setCertifications] = useState(profile.certifications ?? '')
+   699→  return (
+   700→    <DialogShell title="Edit skills & certifications" description="Comma-separated — these become tag chips." onClose={onClose} onSave={() => onSave({ technicalSkills, softSkills, tools, certifications })} saving={saving}>
+   701→      <CommaInput label="Technical skills" value={technicalSkills} onChange={setTechnical} placeholder="e.g. Python, React, SQL, Docker" />
+   702→      <CommaInput label="Soft skills" value={softSkills} onChange={setSoft} placeholder="e.g. Communication, Leadership, Teamwork" />
+   703→      <CommaInput label="Tools" value={tools} onChange={setTools} placeholder="e.g. Git, Jira, Figma, VS Code" />
+   704→      <CommaInput label="Certifications" value={certifications} onChange={setCertifications} placeholder="e.g. AWS Solutions Architect, Google Data Analyst" />
+   705→    </DialogShell>
+   706→  )
+   707→}
+   708→
+   709→function PreferencesDialog({ profile, onClose, onSave, saving }: {
+   710→  profile: ProfileData
+   711→  onClose: () => void
+   712→  onSave: (d: Partial<ProfileData>) => void
+   713→  saving: boolean
+   714→}) {
+   715→  const [desiredJobTitle, setDesiredJobTitle] = useState(profile.desiredJobTitle ?? '')
+   716→  const [desiredRoles, setDesiredRoles] = useState(profile.desiredRoles ?? '')
+   717→  const [industries, setIndustries] = useState(profile.industries ?? '')
+   718→  const [salaryExpectationMin, setMin] = useState<number | null>(profile.salaryExpectationMin)
+   719→  const [salaryExpectationMax, setMax] = useState<number | null>(profile.salaryExpectationMax)
+   720→  const [employmentType, setEmploymentType] = useState(profile.employmentType ?? '')
+   721→  const [remotePreference, setRemotePreference] = useState(profile.remotePreference ?? '')
+   722→  const [shiftPreference, setShiftPreference] = useState(profile.shiftPreference ?? '')
+   723→  const [willingToRelocate, setWillingToRelocate] = useState<boolean>(profile.willingToRelocate ?? false)
+   724→  return (
+   725→    <DialogShell title="Edit career preferences" description="What you're looking for." onClose={onClose} onSave={() => onSave({
+   726→      desiredJobTitle, desiredRoles, industries, salaryExpectationMin, salaryExpectationMax,
+   727→      employmentType, remotePreference, shiftPreference, willingToRelocate,
+   728→    })} saving={saving}>
+   729→      <div className="grid sm:grid-cols-2 gap-3">
+   730→        <TextInput label="Desired job title" value={desiredJobTitle} onChange={setDesiredJobTitle} placeholder="e.g. Software Engineer" />
+   731→        <CommaInput label="Desired roles" value={desiredRoles} onChange={setDesiredRoles} placeholder="e.g. SDE, Backend Developer, Full-stack" />
+   732→        <CommaInput label="Industries" value={industries} onChange={setIndustries} placeholder="e.g. Fintech, SaaS, Healthcare" />
+   733→        <SelectInput label="Employment type" value={employmentType} onChange={setEmploymentType}
+   734→          options={EMPLOYMENT_OPTIONS.map((e) => ({ value: e, label: e.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) }))} />
+   735→        <SelectInput label="Remote preference" value={remotePreference} onChange={setRemotePreference}
+   736→          options={REMOTE_OPTIONS.map((r) => ({ value: r, label: r.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) }))} />
+   737→        <SelectInput label="Shift preference" value={shiftPreference} onChange={setShiftPreference}
+   738→          options={SHIFT_OPTIONS.map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }))} />
+   739→        <NumberInput label="Salary min (LPA)" value={salaryExpectationMin ?? ''} onChange={setMin} placeholder="e.g. 6" />
+   740→        <NumberInput label="Salary max (LPA)" value={salaryExpectationMax ?? ''} onChange={setMax} placeholder="e.g. 12" />
+   741→      </div>
+   742→      <div className="flex items-center justify-between gap-3 py-2">
+   743→        <div>
+   744→          <Label>Willing to relocate</Label>
+   745→          <p className="text-xs text-muted-foreground mt-0.5">Open to moving for the right role</p>
+   746→        </div>
+   747→        <Switch checked={willingToRelocate} onCheckedChange={setWillingToRelocate} />
+   748→      </div>
+   749→    </DialogShell>
+   750→  )
+   751→}
+   752→
+   753→function PortfolioDialog({ profile, onClose, onSave, saving }: {
+   754→  profile: ProfileData
+   755→  onClose: () => void
+   756→  onSave: (d: Partial<ProfileData>) => void
+   757→  saving: boolean
+   758→}) {
+   759→  const [githubUrl, setGithub] = useState(profile.githubUrl ?? '')
+   760→  const [linkedinUrl, setLinkedin] = useState(profile.linkedinUrl ?? '')
+   761→  const [portfolioUrl, setPortfolio] = useState(profile.portfolioUrl ?? '')
+   762→  const [behanceUrl, setBehance] = useState(profile.behanceUrl ?? '')
+   763→  const [dribbbleUrl, setDribbble] = useState(profile.dribbbleUrl ?? '')
+   764→  const [kaggleUrl, setKaggle] = useState(profile.kaggleUrl ?? '')
+   765→  const [researchgateUrl, setResearchgate] = useState(profile.researchgateUrl ?? '')
+   766→  return (
+   767→    <DialogShell title="Edit portfolio links" description="Showcase your work across platforms." onClose={onClose} onSave={() => onSave({
+   768→      githubUrl, linkedinUrl, portfolioUrl, behanceUrl, dribbbleUrl, kaggleUrl, researchgateUrl,
+   769→    })} saving={saving}>
+   770→      <div className="grid sm:grid-cols-2 gap-3">
+   771→        <TextInput label="GitHub" value={githubUrl} onChange={setGithub} placeholder="https://github.com/username" />
+   772→        <TextInput label="LinkedIn" value={linkedinUrl} onChange={setLinkedin} placeholder="https://linkedin.com/in/username" />
+   773→        <TextInput label="Portfolio" value={portfolioUrl} onChange={setPortfolio} placeholder="https://yourname.dev" />
+   774→        <TextInput label="Behance" value={behanceUrl} onChange={setBehance} placeholder="https://behance.net/username" />
+   775→        <TextInput label="Dribbble" value={dribbbleUrl} onChange={setDribbble} placeholder="https://dribbble.com/username" />
+   776→        <TextInput label="Kaggle" value={kaggleUrl} onChange={setKaggle} placeholder="https://kaggle.com/username" />
+   777→        <TextInput label="ResearchGate" value={researchgateUrl} onChange={setResearchgate} placeholder="https://researchgate.net/profile/username" />
+   778→      </div>
+   779→    </DialogShell>
+   780→  )
+   781→}
+   782→
+   783→function ResumeDialog({ profile, onClose, onSave, saving }: {
+   784→  profile: ProfileData
+   785→  onClose: () => void
+   786→  onSave: (d: Partial<ProfileData>) => void
+   787→  saving: boolean
+   788→}) {
+   789→  const [resumeUrl, setResumeUrl] = useState(profile.resumeUrl ?? '')
+   790→  return (
+   791→    <DialogShell title="Edit resume link" description="Paste a public link to your resume (Google Drive, Dropbox, personal site)." onClose={onClose} onSave={() => onSave({ resumeUrl: resumeUrl || null })} saving={saving}>
+   792→      <TextInput label="Resume URL" value={resumeUrl} onChange={setResumeUrl} placeholder="https://drive.google.com/…" />
+   793→      <p className="text-xs text-muted-foreground">
+   794→        Tip: ensure the link is publicly accessible. To analyze your resume with our ATS scorer,{' '}
+   795→        <button
+   796→          className="text-primary hover:underline"
+   797→          onClick={() => { onClose(); useApp.getState().setView('resume-analyzer') }}
+   798→        >
+   799→          go to the Resume Analyzer
+   800→        </button>.
+   801→      </p>
+   802→    </DialogShell>
+   803→  )
+   804→}
+   805→

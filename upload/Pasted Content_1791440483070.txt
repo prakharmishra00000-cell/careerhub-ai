@@ -1,0 +1,2606 @@
+You are a senior product architect, UX/UI designer, full-stack engineer, database architect, DevOps engineer, search engineer, and AI product engineer.
+
+Build a complete production-grade web application called:
+
+"CareerHub AI"
+
+Tagline:
+"Every Opportunity. One Smart Search."
+
+The platform is a premium job, internship, placement, apprenticeship, fellowship, scholarship, and career-opportunity discovery platform.
+
+The core idea is:
+
+Users should be able to search and discover opportunities from multiple legitimate external sources/platforms in one unified interface.
+
+Potential sources may include:
+- LinkedIn
+- Internshala
+- Indeed
+- Glassdoor
+- Naukri
+- Foundit
+- Wellfound
+- Cutshort
+- Unstop
+- LetsIntern
+- Company career pages
+- Government job portals
+- PSU recruitment portals
+- Startup career pages
+- University career portals
+- Apprenticeship portals
+- Other permitted job/internship feeds and APIs
+
+IMPORTANT:
+Do NOT implement unauthorized scraping of websites that prohibit it.
+Create a modular source-integration architecture supporting:
+- Official APIs
+- Licensed feeds
+- Partner APIs
+- Public feeds
+- Permitted crawling where legally/technically allowed
+- Manually imported job feeds
+- Company-provided jobs
+
+Every opportunity must preserve:
+- Original source
+- Original company
+- Original job title
+- Original application URL
+- Original source attribution
+
+The platform must NOT falsely claim that a job is hosted by CareerHub AI.
+
+==================================================
+1. PRODUCT VISION
+==================================================
+
+Build something significantly more advanced than a simple job listing website.
+
+The product should combine:
+
+LinkedIn-style professional discovery
++
+Indeed-style job search
++
+Internshala-style internships
++
+Unstop-style student opportunities
++
+AI-powered job matching
++
+Advanced filtering
++
+Personalized recommendations
++
+Application tracking
++
+Career profile
+
+The platform should support users from almost every educational background and career stage.
+
+Target users include:
+
+- BTech
+- BE
+- MTech
+- ME
+- MCA
+- MBA
+- BBA
+- BCom
+- MCom
+- BSc
+- MSc
+- BA
+- MA
+- BCA
+- PhD
+- Diploma
+- ITI
+- Polytechnic
+- Law
+- Pharmacy
+- Medical
+- Architecture
+- Design
+- Agriculture
+- Biotechnology
+- Chemical Engineering
+- Civil Engineering
+- Mechanical Engineering
+- Electrical Engineering
+- Electronics Engineering
+- Computer Science
+- Information Technology
+- AI/ML
+- Data Science
+- Cybersecurity
+- ECE
+- EEE
+- Automobile
+- Aerospace
+- Production
+- Industrial Engineering
+- Instrumentation
+- Environmental Engineering
+- Biomedical
+- and other disciplines.
+
+Also support:
+- Freshers
+- Students
+- Experienced professionals
+- Career switchers
+- Returning professionals
+- Interns
+- Apprentices
+- Researchers
+
+==================================================
+2. CORE USER EXPERIENCE
+==================================================
+
+The homepage should immediately communicate:
+
+"Find jobs, internships and career opportunities from across the web."
+
+Hero section:
+
+"Find Your Next Opportunity"
+
+Subheading:
+
+"Search jobs, internships, apprenticeships and more from multiple trusted sources — personalized to your education, skills, location and career goals."
+
+Large universal search interface:
+
+[ Job title, skill, company, keyword ]
+
+[ Location ]
+
+[ Search ]
+
+Below search:
+
+Quick filters:
+- Jobs
+- Internships
+- Work From Home
+- Remote
+- Freshers
+- Part Time
+- Government
+- Apprenticeships
+- Graduate Jobs
+- Work Abroad
+
+Add a premium animated but subtle search experience.
+
+Do NOT use excessive gradients or flashy animations.
+
+Design should feel like a combination of:
+
+LinkedIn
++ Linear
++ Notion
++ Stripe
++ modern SaaS dashboards
+
+Use:
+- clean typography
+- excellent spacing
+- rounded cards
+- subtle shadows
+- elegant borders
+- professional blue/indigo accent system
+- dark mode
+- light mode
+- responsive layouts
+- excellent mobile UX
+
+==================================================
+3. AUTHENTICATION
+==================================================
+
+Implement complete authentication.
+
+Support:
+
+- Email/password
+- Google
+- LinkedIn where technically available
+- OTP/email verification
+- Forgot password
+- Reset password
+- Session management
+- Secure logout
+- Account deletion
+
+User roles:
+
+1. Candidate
+2. Recruiter
+3. Company Admin
+4. Platform Admin
+5. Moderator
+
+Use secure authentication and authorization.
+
+Implement role-based access control.
+
+==================================================
+4. CANDIDATE PROFILE
+==================================================
+
+Create a powerful professional profile.
+
+Profile sections:
+
+Personal Information:
+- Name
+- Profile photo
+- Email
+- Phone
+- Current location
+- Preferred locations
+- Date of birth optional
+- Gender optional
+
+Education:
+
+- Highest qualification
+- Degree
+- Specialization
+- Branch
+- University
+- College
+- Graduation year
+- CGPA
+- Percentage
+- Backlogs
+- Active backlogs
+- Gap years
+
+Experience:
+
+- Fresher
+- Internship experience
+- Full-time experience
+- Freelance
+- Part-time
+- Apprenticeship
+
+Skills:
+
+- Technical skills
+- Soft skills
+- Tools
+- Programming languages
+- Frameworks
+- Certifications
+
+Career preferences:
+
+- Desired job title
+- Desired roles
+- Industries
+- Salary expectations
+- Employment type
+- Preferred locations
+- Remote preference
+- Willing to relocate
+- Shift preference
+
+Resume:
+- Upload PDF
+- Resume parsing
+- Extract skills
+- Extract education
+- Extract experience
+- Resume score
+
+Portfolio:
+- GitHub
+- LinkedIn
+- Portfolio website
+- Behance
+- Dribbble
+- Kaggle
+- ResearchGate
+- Other links
+
+Profile completion percentage:
+
+Example:
+
+Profile Strength
+82%
+
+Show missing recommendations.
+
+==================================================
+5. ADVANCED JOB SEARCH
+==================================================
+
+This is the most important feature.
+
+Create an extremely powerful filter system.
+
+Filters should be combinable.
+
+Basic filters:
+
+- Keyword
+- Job title
+- Company
+- Location
+- Industry
+- Skill
+
+Education filters:
+
+- Degree
+- Qualification
+- Branch
+- Specialization
+- Stream
+- Course
+- Graduation year
+
+Support:
+
+BTech
+BE
+MTech
+ME
+BCA
+MCA
+BBA
+MBA
+BCom
+MCom
+BSc
+MSc
+BA
+MA
+PhD
+Diploma
+ITI
+Polytechnic
+etc.
+
+Branch filters:
+
+Mechanical
+Civil
+Electrical
+ECE
+EEE
+CSE
+IT
+AI
+ML
+Data Science
+Chemical
+Production
+Automobile
+Aerospace
+Biotech
+Biomedical
+Environmental
+Instrumentation
+Architecture
+etc.
+
+Experience filters:
+
+- Fresher
+- 0 years
+- 0-1 years
+- 1-2 years
+- 2-3 years
+- 3-5 years
+- 5+ years
+- 10+ years
+
+Important filter:
+
+FRESHER FRIENDLY
+
+Include jobs explicitly accepting freshers.
+
+==================================================
+6. BACKLOG FILTER
+==================================================
+
+Create advanced education eligibility filters.
+
+Options:
+
+- No backlog restriction
+- Active backlog allowed
+- Backlog accepted
+- Backlog not mentioned
+- Maximum backlog count
+- Current backlog allowed
+- Previous backlog allowed
+
+Allow users to specify:
+
+Current active backlogs:
+[ 0 ]
+
+Then intelligently prioritize opportunities whose eligibility appears compatible.
+
+Do not invent eligibility.
+
+Display:
+
+"Eligibility confidence"
+
+Example:
+
+✓ Degree matches
+✓ Branch matches
+✓ Fresher eligible
+✓ Location matches
+⚠ Backlog policy not specified
+
+==================================================
+7. CGPA / PERCENTAGE FILTER
+==================================================
+
+Support:
+
+Minimum CGPA
+Maximum CGPA
+
+Minimum percentage
+Maximum percentage
+
+Options:
+
+- No CGPA requirement
+- No percentage requirement
+- CGPA requirement not mentioned
+- Percentage requirement not mentioned
+
+Very important:
+
+Do not infer "no CGPA requirement" merely because the listing does not mention CGPA.
+
+Differentiate:
+
+"Explicitly no CGPA requirement"
+
+from
+
+"CGPA requirement not specified"
+
+==================================================
+8. JOB TYPE
+==================================================
+
+Filter:
+
+Full-time
+Part-time
+Contract
+Temporary
+Freelance
+Internship
+Apprenticeship
+Trainee
+Graduate program
+Management trainee
+Work-study
+Volunteer
+Fellowship
+Research
+Co-op
+
+==================================================
+9. INTERNSHIP FILTERS
+==================================================
+
+Dedicated internship filters:
+
+Internship type:
+- Paid
+- Unpaid
+- Stipend not disclosed
+
+Duration:
+- 1 month
+- 2 months
+- 3 months
+- 6 months
+- 12 months
+
+Work mode:
+- Remote
+- Hybrid
+- On-site
+
+Conversion:
+- PPO available
+- Possible full-time conversion
+- Conversion not mentioned
+
+Eligibility:
+- Students
+- Fresh graduates
+- Final-year students
+- Any year
+
+Stipend:
+
+₹0
+₹1,000+
+₹5,000+
+₹10,000+
+₹20,000+
+₹30,000+
+₹50,000+
+
+==================================================
+10. LOCATION FILTER
+==================================================
+
+Support worldwide locations.
+
+India:
+
+State
+City
+District
+Pin code where appropriate
+
+Examples:
+
+Delhi
+Mumbai
+Bangalore
+Hyderabad
+Pune
+Chennai
+Noida
+Gurgaon
+Lucknow
+Gorakhpur
+Kanpur
+Jaipur
+Ahmedabad
+Kolkata
+etc.
+
+International:
+
+Country
+State/Province
+City
+
+Support:
+
+- Remote
+- Hybrid
+- On-site
+- Work from home
+- Remote anywhere
+- Remote India
+- Remote worldwide
+
+Location radius:
+
+5 km
+10 km
+25 km
+50 km
+100 km
+
+==================================================
+11. SALARY FILTER
+==================================================
+
+Salary:
+
+Minimum
+Maximum
+
+Currency:
+
+INR
+USD
+EUR
+GBP
+etc.
+
+Salary period:
+
+Annual
+Monthly
+Hourly
+Daily
+
+Options:
+
+- Salary disclosed
+- Salary not disclosed
+- Competitive salary
+- Equity
+- Bonus
+- Commission
+
+Display salary normalization where possible.
+
+Example:
+
+₹4–8 LPA
+
+Also show:
+
+Estimated monthly:
+₹33K–₹66K/month
+
+Clearly label estimates.
+
+==================================================
+12. COMPANY FILTERS
+==================================================
+
+Company size:
+
+1-10
+11-50
+51-200
+201-500
+501-1000
+1001-5000
+5000+
+
+Company type:
+
+Startup
+MNC
+Government
+PSU
+NGO
+Non-profit
+Consulting
+Product company
+Service company
+Agency
+Research organization
+University
+
+Company verification:
+
+Verified
+Unverified
+
+==================================================
+13. SOURCE FILTER
+==================================================
+
+Users can select sources.
+
+Examples:
+
+LinkedIn
+Indeed
+Internshala
+Glassdoor
+Naukri
+Foundit
+Wellfound
+Unstop
+Cutshort
+Company websites
+Government portals
+PSU portals
+
+Allow:
+
+Select all
+Deselect all
+
+Display source badge on every listing.
+
+==================================================
+14. JOB LISTING CARD
+==================================================
+
+Each card should show:
+
+Company logo
+Company name
+Job title
+Location
+Work mode
+Employment type
+Experience
+Salary
+Education
+Posted date
+Source
+Application deadline if available
+Skills
+Eligibility summary
+
+Example:
+
+Software Engineer
+
+ABC Technologies
+
+Bangalore • Hybrid
+
+₹6–10 LPA
+
+Experience:
+0–2 years
+
+Education:
+BTech/BCA/MCA
+
+Skills:
+JavaScript • React • SQL
+
+✓ Freshers considered
+
+Source:
+LinkedIn
+
+Posted:
+2 hours ago
+
+[View Job]
+
+[Save]
+
+[Hide]
+
+[Apply]
+
+==================================================
+15. JOB DETAILS PAGE
+==================================================
+
+Clicking a job opens a detailed page.
+
+Sections:
+
+Job overview
+Company
+Responsibilities
+Requirements
+Required skills
+Preferred skills
+Education
+Experience
+Salary
+Benefits
+Location
+Work mode
+Employment type
+Eligibility
+Application deadline
+Source
+Last verified
+Application link
+
+Important:
+
+Show:
+
+"Apply on LinkedIn"
+
+or
+
+"Apply on Internshala"
+
+depending on original source.
+
+Do not falsely reproduce or modify source content.
+
+Provide:
+
+"Report outdated job"
+
+"Report incorrect information"
+
+"Job no longer available"
+
+==================================================
+16. JOB MATCH SCORE
+==================================================
+
+Create AI-powered matching.
+
+Example:
+
+Your Match Score
+
+92%
+
+Breakdown:
+
+Education: 100%
+Skills: 90%
+Experience: 100%
+Location: 100%
+Salary: 85%
+Career preference: 95%
+
+Use explainable matching.
+
+Never claim guaranteed eligibility.
+
+Use labels:
+
+Excellent match
+Good match
+Partial match
+Low match
+
+==================================================
+17. AI CAREER ASSISTANT
+==================================================
+
+Create an AI assistant.
+
+Users can ask:
+
+"Find mechanical engineering jobs in Bangalore for freshers."
+
+"Show MTech CSE jobs with no minimum CGPA."
+
+"Find remote internships paying more than ₹10,000."
+
+"Find jobs where active backlogs are explicitly allowed."
+
+"Find BBA marketing internships in Delhi."
+
+"Find jobs for 2027 graduates."
+
+"Find jobs that accept diploma holders."
+
+AI should translate natural language into structured filters.
+
+Example:
+
+User:
+
+"Find fresher mechanical jobs in Pune with salary above 5 LPA and no experience."
+
+AI converts to:
+
+Degree:
+BTech/BE
+
+Branch:
+Mechanical Engineering
+
+Experience:
+0
+
+Location:
+Pune
+
+Salary:
+>= ₹5 LPA
+
+==================================================
+18. PERSONALIZED JOB FEED
+==================================================
+
+Create:
+
+"For You"
+
+Feed.
+
+Personalize based on:
+
+Profile
+Education
+Skills
+Search history
+Saved jobs
+Applications
+Preferred locations
+Career interests
+
+Sections:
+
+Recommended for you
+Best matches
+New today
+Closing soon
+Trending
+Top internships
+Remote opportunities
+Freshers
+Companies hiring now
+
+==================================================
+19. SAVED JOBS
+==================================================
+
+Users can save jobs.
+
+Folders:
+
+- High Priority
+- Apply Today
+- Internship
+- Full Time
+- Remote
+- Government
+- Custom folders
+
+Allow custom folders.
+
+==================================================
+20. APPLICATION TRACKER
+==================================================
+
+Create Kanban-style application tracker.
+
+Columns:
+
+Saved
+Applied
+Assessment
+Interview
+Offer
+Rejected
+Withdrawn
+
+Each application:
+
+Company
+Role
+Source
+Date applied
+Deadline
+Notes
+Interview date
+Status
+
+Allow reminders.
+
+==================================================
+21. JOB ALERTS
+==================================================
+
+Users can create alerts.
+
+Example:
+
+Alert:
+"MTech Mechanical + Fresher + Pune"
+
+Frequency:
+
+Instant
+Daily
+Weekly
+
+Delivery:
+
+Email
+In-app
+
+Allow users to pause/delete alerts.
+
+==================================================
+22. RESUME ANALYZER
+==================================================
+
+Allow resume upload.
+
+AI analyzes:
+
+ATS compatibility
+Skills
+Missing keywords
+Formatting
+Experience
+Achievements
+Impact
+Role alignment
+
+Provide:
+
+Resume score: 78/100
+
+Suggestions:
+
+"Add measurable achievements."
+
+"Add SQL to skills if genuinely applicable."
+
+Never fabricate experience.
+
+==================================================
+23. RESUME BUILDER
+==================================================
+
+Create professional resume templates.
+
+Templates:
+
+ATS Minimal
+Modern
+Engineering
+Business
+Academic
+Fresher
+Developer
+
+Sections:
+
+Summary
+Education
+Experience
+Projects
+Skills
+Certifications
+Achievements
+Positions
+Publications
+Languages
+
+Export PDF.
+
+==================================================
+24. COMPANY DIRECTORY
+==================================================
+
+Create company discovery.
+
+Company page:
+
+Logo
+Name
+Industry
+Company size
+Locations
+Website
+Description
+Open jobs
+Internships
+Reviews if legitimately sourced
+Benefits if available
+
+Filters:
+
+Industry
+Location
+Company size
+Job count
+Remote jobs
+
+==================================================
+25. RECRUITER PORTAL
+==================================================
+
+Recruiters can:
+
+Create company
+Post jobs
+Manage jobs
+View applications
+Shortlist candidates
+Search candidates
+Contact candidates
+Manage hiring pipeline
+
+Recruiter dashboard:
+
+Active jobs
+Applications
+Shortlisted
+Interviews
+Offers
+Hiring analytics
+
+==================================================
+26. COMPANY JOB POSTING
+==================================================
+
+Form:
+
+Job title
+Department
+Location
+Remote/hybrid/on-site
+Employment type
+Experience
+Education
+Branch
+Skills
+Salary
+Benefits
+Description
+Responsibilities
+Requirements
+Deadline
+
+Eligibility:
+
+Degree
+Branch
+Graduation year
+CGPA
+Backlogs
+Experience
+
+Do not make fields unnecessarily mandatory.
+
+==================================================
+27. ADMIN DASHBOARD
+==================================================
+
+Create enterprise admin dashboard.
+
+Metrics:
+
+Total users
+Active users
+Jobs indexed
+Jobs today
+Jobs updated
+Jobs expired
+Sources active
+Source failures
+API usage
+Searches
+Applications
+Saved jobs
+Reported jobs
+Duplicate jobs
+Data freshness
+
+Admin pages:
+
+Users
+Companies
+Jobs
+Sources
+Integrations
+Reports
+Moderation
+Analytics
+System health
+AI usage
+Settings
+
+==================================================
+28. JOB INGESTION ENGINE
+==================================================
+
+Create modular architecture.
+
+Each source should have an adapter.
+
+Example:
+
+JobSourceAdapter
+
+Methods:
+
+fetchJobs()
+fetchJobDetails()
+normalizeJob()
+checkAvailability()
+getApplicationUrl()
+
+Implement:
+
+LinkedInAdapter
+IndeedAdapter
+InternshalaAdapter
+GlassdoorAdapter
+NaukriAdapter
+UnstopAdapter
+CompanyCareerAdapter
+
+BUT:
+
+Do not implement unauthorized scraping.
+
+Adapters should support:
+
+API
+RSS
+Feed
+Partner integration
+Approved crawler
+
+Create a generic interface so sources can be added later.
+
+==================================================
+29. NORMALIZED JOB DATABASE
+==================================================
+
+All jobs should be normalized into a common schema.
+
+Job:
+
+id
+source
+sourceJobId
+sourceUrl
+
+title
+companyId
+companyName
+companyLogo
+
+description
+responsibilities
+requirements
+
+location
+country
+state
+city
+
+remoteType
+
+employmentType
+
+experienceMin
+experienceMax
+
+salaryMin
+salaryMax
+salaryCurrency
+salaryPeriod
+
+education
+degree
+branch
+specialization
+
+cgpaRequirement
+percentageRequirement
+backlogPolicy
+
+skills
+
+internship
+internshipDuration
+stipend
+
+postedAt
+updatedAt
+expiresAt
+
+applicationDeadline
+
+status
+
+lastVerifiedAt
+
+createdAt
+updatedAt
+
+==================================================
+30. DUPLICATE DETECTION
+==================================================
+
+The same job may appear on multiple platforms.
+
+Detect duplicates using:
+
+Company
+Job title
+Location
+Description similarity
+Source IDs
+Application URL
+
+Instead of showing five identical jobs:
+
+Show:
+
+"Found on 4 sources"
+
+Then allow the user to choose the source.
+
+Example:
+
+Software Engineer — ABC
+
+Available on:
+
+LinkedIn
+Indeed
+Naukri
+Company Website
+
+==================================================
+31. JOB FRESHNESS
+==================================================
+
+Every job must have:
+
+Posted date
+Last updated
+Last verified
+
+Create freshness labels:
+
+New
+Today
+2 days ago
+Recently updated
+Possibly outdated
+
+Automatically mark jobs stale based on source data.
+
+Do not claim that a job is live unless the source/feed indicates it is currently available.
+
+==================================================
+32. SEARCH ENGINE
+==================================================
+
+Build powerful search.
+
+Support:
+
+Keyword search
+Boolean search
+Semantic search
+Skill matching
+Location matching
+Company search
+
+Example:
+
+"react AND remote NOT internship"
+
+Support autocomplete.
+
+Search suggestions:
+
+Jobs
+Companies
+Skills
+Locations
+
+Use indexing/search infrastructure appropriate for production.
+
+Possible technology:
+
+PostgreSQL full-text search initially.
+
+Optional:
+
+Elasticsearch/OpenSearch/Typesense/Meilisearch for scale.
+
+Design abstraction so search engine can be replaced.
+
+==================================================
+33. DATABASE
+==================================================
+
+Use PostgreSQL.
+
+Tables:
+
+users
+profiles
+education
+experience
+skills
+user_skills
+companies
+jobs
+job_sources
+job_skills
+job_locations
+job_education
+job_applications
+saved_jobs
+saved_searches
+job_alerts
+resumes
+resume_versions
+applications
+application_events
+notifications
+reports
+recruiters
+companies_users
+subscriptions
+audit_logs
+
+Use proper:
+
+Indexes
+Foreign keys
+Constraints
+Enums where appropriate
+Soft deletion
+Created/updated timestamps
+
+==================================================
+34. BACKEND API
+==================================================
+
+Build production-grade REST API or hybrid REST + server actions.
+
+Endpoints:
+
+POST /auth
+GET /jobs
+GET /jobs/:id
+POST /jobs/:id/save
+DELETE /jobs/:id/save
+
+GET /search
+POST /alerts
+GET /alerts
+
+GET /profile
+PUT /profile
+
+POST /resume
+POST /resume/analyze
+
+GET /companies
+GET /companies/:id
+
+POST /applications
+GET /applications
+
+Recruiter:
+
+POST /recruiter/jobs
+PUT /recruiter/jobs/:id
+DELETE /recruiter/jobs/:id
+
+Admin:
+
+GET /admin/jobs
+GET /admin/users
+GET /admin/sources
+GET /admin/analytics
+
+==================================================
+35. TECH STACK
+==================================================
+
+Frontend:
+
+Next.js
+TypeScript
+React
+Tailwind CSS
+
+Use a high-quality component system.
+
+Backend:
+
+Next.js backend/API or separate Node.js service if appropriate.
+
+Database:
+
+PostgreSQL
+
+ORM:
+
+Prisma or Drizzle
+
+Authentication:
+
+Secure auth solution.
+
+Storage:
+
+S3-compatible object storage for resumes/profile images.
+
+Caching:
+
+Redis-compatible cache.
+
+Search:
+
+PostgreSQL initially with abstraction for OpenSearch/Typesense later.
+
+Background processing:
+
+Queue system for:
+
+Job ingestion
+Deduplication
+AI matching
+Resume processing
+Email alerts
+Job freshness checks
+
+==================================================
+36. REAL-TIME SYSTEM
+==================================================
+
+Use WebSockets/SSE where useful.
+
+Real-time updates:
+
+New job alerts
+Application status
+Recruiter messages
+System notifications
+
+Do not use real-time technology unnecessarily.
+
+==================================================
+37. AI ARCHITECTURE
+==================================================
+
+Create AI provider abstraction.
+
+Do not hardcode one AI provider.
+
+AI capabilities:
+
+Job classification
+Skill extraction
+Resume parsing
+Resume analysis
+Job matching
+Natural-language search
+Eligibility extraction
+Duplicate detection assistance
+Career recommendations
+
+AI should return structured JSON where appropriate.
+
+Important:
+
+AI must distinguish:
+
+Explicit information
+Inferred information
+Unknown information
+
+Never fabricate:
+
+Salary
+Eligibility
+CGPA requirements
+Backlog policy
+Application deadline
+
+==================================================
+38. NOTIFICATION SYSTEM
+==================================================
+
+Notifications:
+
+New matching job
+Job closing soon
+Saved job updated
+Application reminder
+Interview reminder
+Profile completion
+Resume suggestions
+
+Channels:
+
+In-app
+Email
+
+Optional:
+
+Push notifications
+
+==================================================
+39. SECURITY
+==================================================
+
+Implement:
+
+Input validation
+Rate limiting
+CSRF protection where relevant
+Secure cookies
+Password hashing
+RBAC
+API authorization
+SQL injection prevention
+XSS prevention
+File upload validation
+Resume access controls
+Audit logging
+Secrets management
+Environment variables
+
+Never expose API keys to frontend.
+
+==================================================
+40. PRIVACY
+==================================================
+
+Create:
+
+Privacy Policy
+Terms
+Cookie settings
+Data deletion
+Account deletion
+Data export
+
+Users must control their personal information.
+
+Resumes should never be publicly accessible by default.
+
+==================================================
+41. RESPONSIVE DESIGN
+==================================================
+
+Desktop:
+Full dashboard layout.
+
+Tablet:
+Adaptive layout.
+
+Mobile:
+
+Bottom navigation:
+
+Home
+Search
+Saved
+Applications
+Profile
+
+Mobile job cards must be extremely easy to scan.
+
+==================================================
+42. DESIGN SYSTEM
+==================================================
+
+Create a premium design system.
+
+Typography:
+
+Use modern professional sans-serif.
+
+Components:
+
+Buttons
+Cards
+Badges
+Inputs
+Dropdowns
+Checkboxes
+Sliders
+Tabs
+Tables
+Modals
+Drawers
+Tooltips
+Skeleton loaders
+Empty states
+Toast notifications
+
+Avoid:
+
+Excessive gradients
+Huge text
+Unnecessary animations
+Overly rounded childish UI
+Visual clutter
+
+Use subtle motion.
+
+==================================================
+43. DARK MODE
+==================================================
+
+Fully support:
+
+Light mode
+Dark mode
+System preference
+
+Persist user preference.
+
+==================================================
+44. LANDING PAGE
+==================================================
+
+Sections:
+
+Hero
+
+Trusted sources
+
+How it works
+
+Search thousands of opportunities
+
+Powerful filters
+
+AI matching
+
+Resume tools
+
+Application tracker
+
+Job alerts
+
+For students
+
+For professionals
+
+For recruiters
+
+Testimonials placeholder
+
+FAQ
+
+CTA
+
+Footer
+
+==================================================
+45. DASHBOARD
+==================================================
+
+Dashboard should show:
+
+Good morning, [Name]
+
+Profile strength
+
+Recommended jobs
+
+New jobs today
+
+Saved jobs
+
+Applications
+
+Upcoming interviews
+
+Job alerts
+
+AI career suggestions
+
+==================================================
+46. SEARCH PAGE
+==================================================
+
+Layout:
+
+Left:
+
+Filters
+
+Center:
+
+Job results
+
+Right:
+
+Optional job preview
+
+Desktop example:
+
+------------------------------------------------
+FILTERS | JOB RESULTS              | JOB PREVIEW
+------------------------------------------------
+
+Mobile:
+
+Filters button
+
+Sort button
+
+Job list
+
+==================================================
+47. SORTING
+==================================================
+
+Sort by:
+
+Relevance
+Newest
+Salary high to low
+Salary low to high
+Best match
+Closing soon
+Recently updated
+
+==================================================
+48. FILTER URLS
+==================================================
+
+Filters must be reflected in URL.
+
+Example:
+
+/jobs?
+degree=btech
+branch=mechanical
+experience=fresher
+location=bangalore
+remote=true
+jobType=full-time
+
+This enables:
+
+Shareable searches
+Browser back/forward
+SEO-friendly pages
+
+==================================================
+49. SEO
+==================================================
+
+Implement:
+
+Metadata
+Open Graph
+Sitemap
+Robots.txt
+Structured data
+JobPosting schema where legally/technically appropriate
+Company schema
+Canonical URLs
+
+Create indexable landing pages for:
+
+Jobs in Bangalore
+Mechanical engineering jobs
+BTech fresher jobs
+Remote internships
+MTech jobs
+BBA internships
+BCom jobs
+etc.
+
+Avoid thin/spam pages.
+
+==================================================
+50. PERFORMANCE
+==================================================
+
+Target:
+
+Fast initial page load
+Excellent Core Web Vitals
+Server-side rendering where useful
+Pagination/infinite loading
+Image optimization
+Caching
+Lazy loading
+Database indexes
+
+Do not load thousands of jobs into the browser.
+
+==================================================
+51. ANALYTICS
+==================================================
+
+Track anonymous/product analytics such as:
+
+Searches
+Popular filters
+Job views
+Saves
+Applications
+Source clicks
+Conversion
+
+Respect privacy settings.
+
+Admin analytics:
+
+Most searched roles
+Most searched locations
+Most popular degrees
+Most popular branches
+Most popular sources
+Application conversion
+User growth
+
+==================================================
+52. JOB REPORTING
+==================================================
+
+Users can report:
+
+Expired job
+Fake job
+Incorrect information
+Wrong salary
+Wrong eligibility
+Duplicate
+Broken application link
+Scam/suspicious
+
+Admin moderation queue.
+
+==================================================
+53. SOURCE HEALTH DASHBOARD
+==================================================
+
+Admin can see:
+
+Source
+Status
+Last successful sync
+Jobs fetched
+Jobs updated
+Jobs failed
+API quota
+Error rate
+
+Example:
+
+Internship Source
+✓ Healthy
+Last sync: 8 minutes ago
+
+==================================================
+54. PREMIUM FEATURES
+==================================================
+
+Design architecture for future subscription plans.
+
+Free:
+
+Basic search
+Basic filters
+Saved jobs
+Limited alerts
+
+Pro:
+
+Advanced filters
+AI matching
+Unlimited alerts
+Resume analyzer
+Application tracker
+Advanced analytics
+
+Career Pro:
+
+AI career assistant
+Resume optimization
+Interview preparation
+Personalized career roadmap
+
+Recruiter:
+
+Job posting
+Candidate search
+Applicant management
+Analytics
+
+Do not implement fake payments unless payment integration is configured.
+
+==================================================
+55. ACCESSIBILITY
+==================================================
+
+Implement:
+
+Keyboard navigation
+ARIA labels
+Accessible forms
+Focus states
+Color contrast
+Screen reader support
+
+==================================================
+56. ERROR STATES
+==================================================
+
+Create polished error UX.
+
+Examples:
+
+No jobs found
+
+"Try removing one or more filters."
+
+Source temporarily unavailable
+
+"Some opportunities from this source couldn't be refreshed."
+
+Network error
+
+"Check your connection and try again."
+
+==================================================
+57. EMPTY STATES
+==================================================
+
+Beautiful empty states for:
+
+No saved jobs
+No applications
+No alerts
+No recommendations
+No search results
+
+==================================================
+58. SAMPLE DATA
+==================================================
+
+During development, create realistic seed data.
+
+Include:
+
+BTech Mechanical fresher
+BTech CSE fresher
+MTech student
+BBA student
+BCom graduate
+BSc graduate
+MBA graduate
+Diploma student
+Experienced software engineer
+
+Create jobs across:
+
+Engineering
+IT
+Data
+Finance
+Marketing
+HR
+Sales
+Operations
+Design
+Research
+Education
+Healthcare
+Government
+
+Clearly mark seed/mock jobs as demo data.
+
+Do not present fake jobs as real live opportunities.
+
+==================================================
+59. ADMIN SOURCE CONFIGURATION
+==================================================
+
+Create source management UI.
+
+Admin can configure:
+
+Source name
+Source type
+API endpoint
+API credentials
+Sync frequency
+Enabled/disabled
+Rate limits
+Parser version
+
+Credentials must be securely stored.
+
+Never expose secrets in UI/API.
+
+==================================================
+60. ARCHITECTURE
+==================================================
+
+Use clean modular architecture.
+
+Suggested:
+
+/app
+/components
+/features
+/lib
+/services
+/database
+/api
+/workers
+/ai
+/search
+/integrations
+/types
+/utils
+
+Separate:
+
+UI
+Business logic
+Database
+External integrations
+AI services
+Background jobs
+
+Use TypeScript throughout.
+
+==================================================
+61. CODE QUALITY
+==================================================
+
+Write:
+
+Strong typing
+Reusable components
+Reusable hooks
+Service abstractions
+Validation schemas
+Error handling
+Logging
+Unit tests
+Integration tests
+
+Avoid duplicated code.
+
+==================================================
+62. TESTING
+==================================================
+
+Create tests for:
+
+Authentication
+Search
+Filters
+Job matching
+Saving jobs
+Applications
+Alerts
+Recruiter posting
+Admin controls
+Source integrations
+Deduplication
+Resume upload
+Authorization
+
+Create test data.
+
+==================================================
+63. DEMO MODE
+==================================================
+
+Provide a development/demo mode.
+
+Demo accounts:
+
+Candidate
+Recruiter
+Admin
+
+Clearly identify demo mode.
+
+==================================================
+64. FINAL UI PAGES
+==================================================
+
+Create at minimum:
+
+/
+
+ /jobs
+
+ /jobs/[id]
+
+ /search
+
+ /companies
+
+ /companies/[id]
+
+ /internships
+
+ /internships/[id]
+
+ /remote-jobs
+
+ /freshers
+
+ /government-jobs
+
+ /dashboard
+
+ /profile
+
+ /profile/edit
+
+ /saved
+
+ /applications
+
+ /alerts
+
+ /resume
+
+ /resume/analyzer
+
+ /resume/builder
+
+ /career-ai
+
+ /settings
+
+ /login
+
+ /register
+
+ /forgot-password
+
+ /recruiter
+
+ /recruiter/jobs
+
+ /recruiter/jobs/new
+
+ /recruiter/applications
+
+ /admin
+
+ /admin/jobs
+
+ /admin/users
+
+ /admin/sources
+
+ /admin/companies
+
+ /admin/reports
+
+ /admin/analytics
+
+ /privacy
+
+ /terms
+
+==================================================
+65. IMPORTANT PRODUCT RULE
+==================================================
+
+The platform is an aggregator/discovery engine.
+
+It does NOT need to force users to apply inside CareerHub AI.
+
+For external jobs:
+
+[View Opportunity]
+
+opens the original source/application page.
+
+Examples:
+
+"Apply on LinkedIn"
+"Apply on Internshala"
+"Apply on Indeed"
+"Apply on Company Website"
+
+Track outbound clicks when legally appropriate and privacy-compliant.
+
+==================================================
+66. DATA ACCURACY RULE
+==================================================
+
+Never invent missing information.
+
+If salary is missing:
+
+"Salary not disclosed"
+
+If CGPA requirement is missing:
+
+"CGPA requirement not specified"
+
+If backlog policy is missing:
+
+"Backlog policy not specified"
+
+If deadline is missing:
+
+"Deadline not specified"
+
+Never convert missing information into a positive eligibility claim.
+
+==================================================
+67. ANTI-DUPLICATION RULE
+==================================================
+
+If multiple sources contain the same job:
+
+Group them.
+
+Example:
+
+Software Engineer
+ABC Technologies
+
+Found on 3 sources
+
+[LinkedIn]
+[Indeed]
+[Company Website]
+
+==================================================
+68. USER PERSONALIZATION
+==================================================
+
+After profile setup, ask:
+
+What are you looking for?
+
+Degree:
+Branch:
+Graduation year:
+Experience:
+Preferred roles:
+Preferred locations:
+Remote preference:
+Minimum salary:
+Job type:
+
+Then generate personalized feed.
+
+==================================================
+69. ONBOARDING
+==================================================
+
+Create 5-step onboarding.
+
+Step 1:
+Education
+
+Step 2:
+Skills
+
+Step 3:
+Experience
+
+Step 4:
+Career preferences
+
+Step 5:
+Location/preferences
+
+Then:
+
+"Your personalized job feed is ready."
+
+==================================================
+70. FUTURE FEATURES
+==================================================
+
+Architect for future:
+
+Interview preparation
+AI mock interviews
+Skill gap analysis
+Learning recommendations
+Courses
+Certifications
+Career roadmap
+Mentor marketplace
+Networking
+Professional community
+Company reviews
+Salary insights
+Government exam opportunities
+Scholarships
+Competitions
+Hackathons
+Research opportunities
+Fellowships
+Study abroad opportunities
+
+Do not build all future features now.
+
+Make architecture extensible.
+
+==================================================
+71. DEVELOPMENT PRIORITY
+==================================================
+
+Build in this order:
+
+PHASE 1
+
+Authentication
+Database
+User profile
+Job schema
+Job listing
+Search
+Basic filters
+Job details
+
+PHASE 2
+
+Advanced filters
+Source architecture
+Deduplication
+Saved jobs
+Applications
+Alerts
+
+PHASE 3
+
+AI matching
+AI search
+Resume analyzer
+Personalized feed
+
+PHASE 4
+
+Recruiter portal
+Company pages
+Admin dashboard
+
+PHASE 5
+
+Source integrations
+Background jobs
+Monitoring
+Production hardening
+
+==================================================
+72. IMPORTANT IMPLEMENTATION REQUIREMENT
+==================================================
+
+Do not only generate static frontend pages.
+
+I want a REAL full-stack application.
+
+The frontend must be connected to:
+
+Database
+Authentication
+APIs
+Search
+Filters
+User profile
+Saved jobs
+Applications
+Alerts
+AI services
+Admin system
+
+Buttons must actually work.
+
+Forms must actually submit.
+
+Filters must actually query data.
+
+Authentication must actually work.
+
+Saved jobs must persist.
+
+Applications must persist.
+
+Admin actions must persist.
+
+Do not create fake interactions merely for visual demonstration.
+
+==================================================
+73. UI QUALITY BAR
+==================================================
+
+The final result should look like a serious venture-backed startup product.
+
+It should NOT look like:
+
+A college project
+A basic CRUD dashboard
+A generic AI-generated website
+A template
+
+It should feel like a premium product comparable in polish to:
+
+LinkedIn
+Indeed
+Linear
+Notion
+Stripe
+Modern SaaS products
+
+Use excellent:
+
+Typography
+Spacing
+Hierarchy
+Responsive behavior
+Micro-interactions
+Loading states
+Empty states
+Error states
+Accessibility
+
+==================================================
+74. FINAL DELIVERABLE
+==================================================
+
+Generate the complete application.
+
+Include:
+
+Frontend
+Backend
+Database
+Authentication
+API layer
+Search
+Filtering
+AI architecture
+Source integration architecture
+Admin dashboard
+Recruiter dashboard
+Candidate dashboard
+Responsive UI
+Dark mode
+Testing
+Seed data
+Environment configuration
+Documentation
+
+Create:
+
+README.md
+
+Explain:
+
+How to install
+How to run
+Environment variables
+Database setup
+Migrations
+Seed data
+Authentication setup
+AI provider setup
+Source integration setup
+Production deployment
+Background workers
+Search configuration
+
+Create:
+
+.env.example
+
+Never place real secrets inside the codebase.
+
+==================================================
+75. FINAL INSTRUCTION
+==================================================
+
+Do not stop after creating the UI.
+
+Continue until the application has a coherent full-stack architecture and all core flows are connected.
+
+Prioritize:
+
+1. Working functionality
+2. Data integrity
+3. Search/filter accuracy
+4. Security
+5. Performance
+6. Premium UI/UX
+
+Build the system modularly so that new job sources, degrees, branches, filters, AI providers and career categories can be added without rewriting the application.
+
+The final product should be called:
+
+CareerHub AI
+
+Tagline:
+
+"Every Opportunity. One Smart Search."
+
+Secondary tagline:
+
+"Jobs. Internships. Careers. All in one place."
