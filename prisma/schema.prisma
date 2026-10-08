@@ -430,3 +430,17 @@ model CompanyReview {
   @@index([companyId])
   @@index([createdAt])
 }
+
+model AiGeneration {
+  id        String   @id @default(cuid())
+  userId    String?
+  type      String   // interview_prep | career_roadmap
+  title     String   // e.g. "Software Engineer @ Google" or "Junior → Senior Engineer"
+  input     String?  // JSON string of input params
+  result    String   // JSON string of AI output
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}

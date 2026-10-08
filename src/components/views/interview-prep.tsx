@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '@/lib/store'
 import { api } from '@/lib/api'
+import { AiHistorySection } from '@/components/ai-history-section'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -57,6 +58,9 @@ export function InterviewPrepView() {
       const skillsArr = skills.split(',').map((s) => s.trim()).filter(Boolean)
       const res = await api.aiInterviewPrep(jobTitle.trim(), company.trim() || undefined, skillsArr, experienceLevel)
       setResult(res)
+      // Save to history
+      const title = company.trim() ? `${jobTitle.trim()} @ ${company.trim()}` : jobTitle.trim()
+      api.saveAiGeneration({ type: 'interview_prep', title, input: { jobTitle, company, skills: skillsArr, experienceLevel }, result: res }).catch(() => {})
     } catch (e: any) { toast.error(e.message) }
     finally { setLoading(false) }
   }
@@ -134,6 +138,9 @@ export function InterviewPrepView() {
             <FeatureCard icon={MessageSquare} title="Behavioral questions" desc="STAR-method behavioral questions with answering tips" />
             <FeatureCard icon={Target} title="Topics & tips" desc="Key topics to review, actionable tips, and red flags to avoid" />
           </div>
+
+          {/* History */}
+          <AiHistorySection type="interview_prep" onLoad={(res, input) => { setResult(res); if (input?.jobTitle) setJobTitle(input.jobTitle); if (input?.company) setCompany(input.company); if (input?.skills) setSkills(Array.isArray(input.skills) ? input.skills.join(', ') : ''); if (input?.experienceLevel) setExperienceLevel(input.experienceLevel) }} />
         </div>
       )}
 

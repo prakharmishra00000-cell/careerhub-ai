@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '@/lib/store'
 import { api } from '@/lib/api'
+import { AiHistorySection } from '@/components/ai-history-section'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -58,6 +59,9 @@ export function CareerRoadmapView() {
     try {
       const res = await api.aiCareerRoadmap({ currentRole, targetRole, timeline })
       setResult(res)
+      // Save to history
+      const title = `${currentRole || 'Current'} → ${targetRole || 'Target role'}`
+      api.saveAiGeneration({ type: 'career_roadmap', title, input: { currentRole, targetRole, timeline }, result: res }).catch(() => {})
     } catch (e: any) { toast.error(e.message) }
     finally { setLoading(false) }
   }
@@ -125,6 +129,9 @@ export function CareerRoadmapView() {
               <FeatureMini icon={DollarSign} label="Salary projection" color="text-amber-500" />
             </div>
           </Card>
+
+          {/* History */}
+          <AiHistorySection type="career_roadmap" onLoad={(res, input) => { setResult(res); setActivePhase(0); if (input?.currentRole) setCurrentRole(input.currentRole); if (input?.targetRole) setTargetRole(input.targetRole); if (input?.timeline) setTimeline(input.timeline) }} />
         </div>
       )}
 

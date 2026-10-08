@@ -980,3 +980,65 @@ CareerHub AI is a comprehensive SPA with 22+ views, 52+ API routes, 7 AI endpoin
 3. **Skill learning resources**: Link missing skills to specific courses/resources
 4. **Job recommendations reason badges**: Show "Matched by: CSE · Bangalore · React" badges on recommended jobs
 5. **Keyboard shortcut help dialog**: Press Shift+? to see all available shortcuts
+
+---
+Task ID: 29
+Agent: main (cron round 10)
+Task: AI generation history (save & reload interview prep + career roadmap results), styling polish
+
+## Current Project Status Assessment
+CareerHub AI is a mature, feature-rich SPA with 22+ views, 55+ API routes, 7 AI endpoints, company reviews, interview prep, career roadmap, skill gap analysis, salary insights, job/company comparison, onboarding wizard, personalized recommendations, search history, trending jobs, browse-by-industry, email preview, recently-viewed-jobs. The platform is stable and lint-clean. This round added AI generation history — saving and reloading interview prep and career roadmap results.
+
+## Completed Modifications
+
+### 1. AI Generation History (full-stack)
+- **New Prisma model**: `AiGeneration` (id, userId?, type, title, input?, result, createdAt) with indexes on userId, type, createdAt
+- **New API**: `GET/POST/DELETE /api/ai/history` + `GET/DELETE /api/ai/history/[id]`
+  - GET (list): returns last 20 generations, optional `type` filter
+  - POST (save): creates a generation record with type, title, input (JSON), result (JSON)
+  - GET [id]: returns a single generation by ID (with ownership check)
+  - DELETE [id]: deletes a single generation (ownership-checked)
+  - DELETE (clear all): clears all or by type
+- **API client**: `api.aiHistory(type?)`, `api.aiHistoryItem(id)`, `api.saveAiGeneration(body)`, `api.deleteAiGeneration(id)`, `api.clearAiHistory(type?)`
+- **New component**: `src/components/ai-history-section.tsx` — reusable `AiHistorySection`
+  - Fetches history for a given type (interview_prep | career_roadmap)
+  - Shows up to 5 recent items with title, time-ago, Load button, Delete button
+  - Load: fetches the full generation and calls `onLoad(result, input)` to restore the view state
+  - Delete: removes from DB and list
+  - Loading skeleton, auto-hides if empty, auth-gated (hidden for logged-out users)
+  - Compact card design with clock icons and hover-reveal action buttons
+
+### 2. Interview Prep — History Integration
+- **File**: `src/components/views/interview-prep.tsx`
+  - After generating, saves the result to AI history via `api.saveAiGeneration({ type: 'interview_prep', title, input, result })`
+  - Title format: "JobTitle @ Company" or just "JobTitle"
+  - Added `AiHistorySection` to the empty state below the feature cards
+  - Loading from history restores: jobTitle, company, skills, experienceLevel inputs + result view
+
+### 3. Career Roadmap — History Integration
+- **File**: `src/components/views/career-roadmap.tsx`
+  - After generating, saves the result to AI history via `api.saveAiGeneration({ type: 'career_roadmap', title, input, result })`
+  - Title format: "Current Role → Target Role"
+  - Added `AiHistorySection` to the empty state below the feature mini cards
+  - Loading from history restores: currentRole, targetRole, timeline inputs + result view + resets active phase to 0
+
+## Verification Results
+- `bun run lint` → clean (0 errors, 0 warnings) ✅
+- **AI History API**: 
+  - Login ✓, Save ✓ (returned ID), List ✓ (1 generation found with title "Software Engineer @ Google") ✅
+  - GET /api/ai/history returns saved generations with type filter ✅
+- **Interview Prep UI**: History section in DOM showing "1 saved prep guides" with Load and Delete buttons ✅
+- **Career Roadmap UI**: History section wired and ready ✅
+- All new components and API routes lint-clean ✅
+
+## Unresolved Issues / Risks
+1. **Server stability**: Dev server continues to be reaped between bash commands. Code verified via API calls and DOM snapshot.
+2. **AI history is auth-gated**: Not visible for logged-out users. The demo candidate's history populates as they use the AI features.
+3. **History loads in the empty state only**: The history section appears when there's no active result. To access history while viewing results, the user would need to clear/regenerate. This is by design — keeps the UI clean.
+
+## Priority Recommendations for Next Phase
+1. **Recommendation reason badges**: Show "Matched by: CSE · Bangalore · React" badges on dashboard recommended jobs
+2. **Keyboard shortcut help dialog**: Press ? to see all available shortcuts
+3. **Skill learning resources**: Link missing skills from skill-gap analysis to specific courses/resources
+4. **Job detail page collapsible sections**: Make description/responsibilities/requirements collapsible for better mobile UX
+5. **Dashboard "Quick actions" card**: One-click access to key actions (search, AI assistant, resume analyzer)

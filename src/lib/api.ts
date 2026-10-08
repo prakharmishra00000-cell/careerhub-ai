@@ -119,6 +119,16 @@ export const api = {
     jfetch<any>('/api/ai/interview-prep', { method: 'POST', body: JSON.stringify({ jobTitle, company, skills, experienceLevel }) }),
   aiCareerRoadmap: (body: { currentRole?: string; targetRole?: string; timeline?: string }) =>
     jfetch<any>('/api/ai/career-roadmap', { method: 'POST', body: JSON.stringify(body) }),
+  aiHistory: (type?: string) =>
+    jfetch<{ generations: any[] }>(`/api/ai/history${type ? `?type=${type}` : ''}`),
+  aiHistoryItem: (id: string) =>
+    jfetch<{ generation: any }>(`/api/ai/history/${id}`),
+  saveAiGeneration: (body: { type: string; title: string; input?: any; result: any }) =>
+    jfetch<{ ok: boolean; id: string }>('/api/ai/history', { method: 'POST', body: JSON.stringify(body) }),
+  deleteAiGeneration: (id: string) =>
+    jfetch<{ ok: boolean }>(`/api/ai/history/${id}`, { method: 'DELETE' }),
+  clearAiHistory: (type?: string) =>
+    jfetch<{ ok: boolean }>(`/api/ai/history${type ? `?type=${type}` : ''}`, { method: 'DELETE' }),
 
   // analytics
   salaryInsights: (params?: { branch?: string; city?: string; employmentType?: string; remoteType?: string }) => {
