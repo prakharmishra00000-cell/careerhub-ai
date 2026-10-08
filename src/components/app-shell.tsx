@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useApp } from '@/lib/store'
 import { api } from '@/lib/api'
 import { LandingView } from '@/components/views/landing'
@@ -25,6 +25,7 @@ import { Footer } from '@/components/footer'
 import { AuthModal } from '@/components/auth-modal'
 import { CommandPalette } from '@/components/command-palette'
 import { CompareBar } from '@/components/compare-bar'
+import { OnboardingWizard } from '@/components/onboarding-wizard'
 
 export function AppShell() {
   const view = useApp((s) => s.view)
@@ -32,6 +33,7 @@ export function AppShell() {
   const refreshNotifications = useApp((s) => s.refreshNotifications)
   const user = useApp((s) => s.user)
   const authLoading = useApp((s) => s.authLoading)
+  const [onboardingOpen, setOnboardingOpen] = useState(false)
 
   // load session on mount
   useEffect(() => { refreshUser() }, [refreshUser])
@@ -73,6 +75,35 @@ export function AppShell() {
 
   // refresh notifications when user changes
   useEffect(() => { if (user) refreshNotifications() }, [user, refreshNotifications])
+
+  // trigger onboarding for new candidates with low profile completion
+  useEffect(() => {
+    if (!user || user.role !== 'candidate') return
+    // Only check once per session — use sessionStorage to avoid re-prompting
+    if (typeof window === 'undefined') return
+    const dismissed = window.sessionStorage.getItem('careerhub_onboarding_dismissed')
+    if (dismissed === '1') return
+    // Check profile completion
+    const checkOnboarding = async () => {
+      try {
+        const profile = await api.getProfile()
+        if (profile.completionPct < 40) {
+          setOnboardingOpen(true)
+        }
+      } catch { /* ignore — profile may not exist yet */ }
+    }
+    checkOnboarding()
+  }, [user])
+
+  const handleOnboardingComplete = () => {
+    setOnboardingOpen(false)
+    if (typeof window !== 'undefined') window.sessionStorage.setItem('careerhub_onboarding_dismissed', '1')
+    useApp.getState().setView('dashboard')
+  }
+  const handleOnboardingSkip = () => {
+    setOnboardingOpen(false)
+    if (typeof window !== 'undefined') window.sessionStorage.setItem('careerhub_onboarding_dismissed', '1')
+  }
 
   // render
   let content: React.ReactNode = null
@@ -145,6 +176,7 @@ export function AppShell() {
       <AuthModal />
       <CommandPalette />
       <CompareBar />
+      <OnboardingWizard open={onboardingOpen} onComplete={handleOnboardingComplete} onSkip={handleOnboardingSkip} />
     </div>
   )
 }

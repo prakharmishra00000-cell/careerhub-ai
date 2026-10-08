@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '@/lib/store'
 import { api } from '@/lib/api'
-import type { JobDetails as JobDetailsType, MatchScore } from '@/lib/types'
+import type { JobDetails as JobDetailsType, MatchScore, JobCardData } from '@/lib/types'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label'
 import {
   ArrowLeft, MapPin, Briefcase, Clock, Building2, CheckCircle2, AlertTriangle, ExternalLink,
   Bookmark, BookmarkCheck, Flag, Share2, Calendar, IndianRupee, GraduationCap, Sparkles,
-  Trophy, Bot, Loader2, ShieldCheck, RefreshCw, AlertCircle, Lightbulb, Check, X,
+  Trophy, Bot, Loader2, ShieldCheck, RefreshCw, AlertCircle, Lightbulb, Check, X, GitCompare,
 } from 'lucide-react'
 import { formatSalary, formatStipend, timeAgo, daysUntil, freshnessLabel, employmentTypeLabel, remoteTypeLabel } from '@/lib/jobs'
 import { toast } from 'sonner'
@@ -347,6 +347,36 @@ export function JobDetailsView() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Mobile sticky apply bar */}
+      <div className="lg:hidden fixed bottom-16 inset-x-0 z-30 border-t border-border bg-background/95 backdrop-blur-xl px-4 py-2.5 flex items-center gap-2 pb-[calc(0.625rem+env(safe-area-inset-bottom))]">
+        <div className="flex-1 min-w-0">
+          {job.isInternship ? (
+            <p className="text-sm font-semibold leading-tight">{formatStipend(job.stipendMin, job.stipendMax, job.internshipPaid)}</p>
+          ) : (
+            <p className="text-sm font-semibold leading-tight">{formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency, job.salaryPeriod, job.salaryDisclosed)}</p>
+          )}
+          <p className="text-[10px] text-muted-foreground truncate">{job.companyName} · {job.city ?? 'Remote'}</p>
+        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-10 shrink-0"
+          onClick={handleSave}
+        >
+          {saved ? <BookmarkCheck className="size-4 fill-current text-primary" /> : <Bookmark className="size-4" />}
+        </Button>
+        <Button
+          size="sm"
+          className="h-10 px-4 shrink-0 gap-1.5"
+          onClick={handleApply}
+        >
+          {applied ? 'Applied ✓' : 'Apply'} <ExternalLink className="size-3.5" />
+        </Button>
+      </div>
+
+      {/* Similar jobs section */}
+      <SimilarJobs jobId={job.id} branch={job.branch} city={job.city} />
     </div>
   )
 }
@@ -403,5 +433,80 @@ function ReportDialog({ job, open, onOpenChange }: { job: JobDetailsType; open: 
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+// ---------------- Similar jobs section ----------------
+function SimilarJobs({ jobId, branch, city }: { jobId: string; branch: string | null; city: string | null }) {
+  const openJob = useApp((s) => s.openJob)
+  const toggleCompare = useApp((s) => s.toggleCompare)
+  const compareIds = useApp((s) => s.compareIds)
+  const [jobs, setJobs] = useState<JobCardData[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      setLoading(true)
+      try {
+        const filter: any = { pageSize: 4, sort: 'newest' }
+        if (branch) filter.branch = [branch]
+        if (city) filter.city = city
+        const res = await api.jobs(filter)
+        if (active) setJobs(res.jobs.filter((j) => j.id !== jobId).slice(0, 3))
+      } catch { /* ignore */ }
+      finally { if (active) setLoading(false) }
+    }
+    load()
+    return () => { active = false }
+  }, [jobId, branch, city])
+
+  if (loading) return null
+  if (jobs.length === 0) return null
+
+  return (
+    <div className="mt-8">
+      <Card className="p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles className="size-4 text-primary" />
+          <h3 className="font-semibold text-sm">Similar opportunities</h3>
+        </div>
+        <div className="space-y-2">
+          {jobs.map((j) => {
+            const inCompare = compareIds.includes(j.id)
+            return (
+              <div
+                key={j.id}
+                className="flex items-center gap-3 p-2.5 rounded-lg border border-border/60 hover:border-primary/30 hover:bg-accent/30 transition-colors cursor-pointer group"
+                onClick={() => openJob(j.id)}
+              >
+                <Avatar className="size-9 rounded-lg border border-border shrink-0">
+                  <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-xs font-semibold">{j.companyName.split(' ').slice(0, 2).map((w) => w[0]).join('')}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">{j.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">{j.companyName} · {j.city ?? 'Remote'}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  {j.isInternship ? (
+                    <p className="text-xs font-semibold">{formatStipend(j.stipendMin, j.stipendMax, j.internshipPaid)}</p>
+                  ) : (
+                    <p className="text-xs font-semibold">{formatSalary(j.salaryMin, j.salaryMax, j.salaryCurrency, j.salaryPeriod, j.salaryDisclosed)}</p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground">{timeAgo(j.postedAt)}</p>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleCompare(j.id) }}
+                  className={`size-7 inline-flex items-center justify-center rounded-full hover:bg-accent transition-colors shrink-0 ${inCompare ? 'text-primary bg-accent' : 'text-muted-foreground'}`}
+                  title={inCompare ? 'In comparison' : 'Add to comparison'}
+                >
+                  <GitCompare className="size-3.5" />
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      </Card>
+    </div>
   )
 }

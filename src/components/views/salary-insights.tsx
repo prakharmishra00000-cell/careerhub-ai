@@ -50,6 +50,8 @@ export function SalaryInsightsView() {
     return () => { active = false }
   }, [filters])
 
+  const resetFilters = () => setFilters({ branch: '', city: '', employmentType: '', remoteType: '' })
+
   const summary = data?.summary
   const distribution = data?.distribution ?? []
   const byBranch = (data?.byBranch ?? []).slice(0, 8)
@@ -124,7 +126,7 @@ export function SalaryInsightsView() {
             <TrendingUp className="size-12 mx-auto text-muted-foreground/30 mb-3" />
             <h3 className="font-semibold text-lg mb-1">No salary data for these filters</h3>
             <p className="text-sm text-muted-foreground mb-4">Try removing filters or broadening your criteria.</p>
-            <Button variant="outline" onClick={() => setFilters({ branch: '', city: '', employmentType: '', remoteType: '' })}>Reset filters</Button>
+            <Button variant="outline" onClick={resetFilters}>Reset filters</Button>
           </div>
         ) : (
           <>

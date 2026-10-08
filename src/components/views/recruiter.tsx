@@ -24,7 +24,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   Briefcase, Plus, Pencil, Eye, Ban, RotateCcw, Users, ClipboardList, CalendarClock, Trophy,
   MapPin, Search, ExternalLink, Inbox, Loader2, Sparkles, Star, Building2,
-  Clock, Info,
+  Clock, Info, Check,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -935,23 +935,68 @@ function ApplicationsTab() {
   const [q, setQ] = useState('')
   const [shortlisted, setShortlisted] = useState<Record<string, boolean>>({})
   const [selected, setSelected] = useState<any | null>(null)
+  const [updating, setUpdating] = useState(false)
+  const [notesDraft, setNotesDraft] = useState('')
+  const [interviewDateDraft, setInterviewDateDraft] = useState('')
+
+  const load = async () => {
+    setLoading(true)
+    try {
+      const res = await api.recruiterApplications()
+      setApps(unwrap<any>(res, 'applications'))
+    } catch (e: any) {
+      toast.error(e.message || 'Could not load applications')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     let active = true
-    const load = async () => {
-      setLoading(true)
-      try {
-        const res = await api.recruiterApplications()
-        if (active) setApps(unwrap<any>(res, 'applications'))
-      } catch (e: any) {
-        if (active) toast.error(e.message || 'Could not load applications')
-      } finally {
-        if (active) setLoading(false)
-      }
+    const doLoad = async () => {
+      await load()
+      if (!active) return
     }
-    load()
+    doLoad()
     return () => { active = false }
   }, [])
+
+  const updateStatus = async (id: string, status: string) => {
+    setUpdating(true)
+    try {
+      await api.recruiterUpdateApplication(id, { status })
+      setApps((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)))
+      if (selected?.id === id) setSelected((prev) => prev ? { ...prev, status } : prev)
+      toast.success(`Application moved to "${status}"`)
+    } catch (e: any) {
+      toast.error(e.message || 'Could not update application')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const saveDetails = async () => {
+    if (!selected) return
+    setUpdating(true)
+    try {
+      const body: any = { notes: notesDraft }
+      if (interviewDateDraft) body.interviewDate = new Date(interviewDateDraft).toISOString()
+      await api.recruiterUpdateApplication(selected.id, body)
+      setApps((prev) => prev.map((a) => (a.id === selected.id ? { ...a, notes: notesDraft, interviewDate: interviewDateDraft ? new Date(interviewDateDraft).toISOString() : a.interviewDate } : a)))
+      setSelected((prev) => prev ? { ...prev, notes: notesDraft, interviewDate: interviewDateDraft ? new Date(interviewDateDraft).toISOString() : prev.interviewDate } : prev)
+      toast.success('Details saved')
+    } catch (e: any) {
+      toast.error(e.message || 'Could not save details')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const openDetails = (a: any) => {
+    setSelected(a)
+    setNotesDraft(a.notes ?? '')
+    setInterviewDateDraft(a.interviewDate ? new Date(a.interviewDate).toISOString().slice(0, 16) : '')
+  }
 
   const filtered = useMemo(() => {
     return apps.filter((a) => {
@@ -975,16 +1020,6 @@ function ApplicationsTab() {
 
   return (
     <div className="space-y-4">
-      <Card className="p-3 bg-primary/5 border-primary/20">
-        <div className="flex items-start gap-2 text-xs">
-          <Info className="size-4 text-primary shrink-0 mt-0.5" />
-          <p className="text-muted-foreground">
-            <span className="font-medium text-foreground">Recruiter application management is in demo mode.</span>{' '}
-            You can browse applications and shortlist candidates locally — status updates and notes are not persisted in this sandbox.
-          </p>
-        </div>
-      </Card>
-
       {/* Filter + search */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 flex-wrap">
@@ -1051,7 +1086,9 @@ function ApplicationsTab() {
                       <p className="truncate max-w-[220px]">{a.jobTitle}</p>
                       <p className="text-xs text-muted-foreground truncate max-w-[220px]">{a.companyName}</p>
                     </td>
-                    <td className="px-4 py-3"><ApplicationStatusBadge status={a.status} /></td>
+                    <td className="px-4 py-3">
+                      <ApplicationStatusSelect status={a.status} onChange={(s) => updateStatus(a.id, s)} disabled={updating} />
+                    </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">{timeAgo(a.appliedAt)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1.5">
@@ -1064,7 +1101,7 @@ function ApplicationsTab() {
                         >
                           <Star className={`size-3.5 ${shortlisted[a.id] ? 'fill-current' : ''}`} />
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setSelected(a)} className="h-8 px-2.5">
+                        <Button size="sm" variant="ghost" onClick={() => openDetails(a)} className="h-8 px-2.5">
                           <Eye className="size-3.5" />
                         </Button>
                       </div>
@@ -1091,19 +1128,19 @@ function ApplicationsTab() {
                       <p className="text-xs text-muted-foreground truncate">{a.user?.email}</p>
                     </div>
                   </div>
-                  <ApplicationStatusBadge status={a.status} />
                 </div>
-                <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between gap-2">
+                <div className="mt-3 pt-3 border-t border-border/60 space-y-2.5">
                   <div className="min-w-0">
                     <p className="text-sm truncate">{a.jobTitle}</p>
                     <p className="text-xs text-muted-foreground">{a.companyName} · {timeAgo(a.appliedAt)}</p>
                   </div>
+                  <ApplicationStatusSelect status={a.status} onChange={(s) => updateStatus(a.id, s)} disabled={updating} />
                   <div className="flex items-center gap-1.5 shrink-0">
                     <Button size="sm" variant={shortlisted[a.id] ? 'default' : 'outline'} onClick={() => setShortlisted((s) => ({ ...s, [a.id]: !s[a.id] }))} className="h-8 px-2.5">
                       <Star className={`size-3.5 ${shortlisted[a.id] ? 'fill-current' : ''}`} />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setSelected(a)} className="h-8 px-2.5">
-                      <Eye className="size-3.5" />
+                    <Button size="sm" variant="ghost" onClick={() => openDetails(a)} className="h-8 px-2.5">
+                      <Eye className="size-3.5" /> Details
                     </Button>
                   </div>
                 </div>
@@ -1118,7 +1155,7 @@ function ApplicationsTab() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Application details</DialogTitle>
-            <DialogDescription>Demo mode — read-only in this sandbox.</DialogDescription>
+            <DialogDescription>Update status, notes, and interview schedule.</DialogDescription>
           </DialogHeader>
           {selected && (
             <div className="space-y-4">
@@ -1148,29 +1185,45 @@ function ApplicationsTab() {
                   <p className="font-medium">{timeAgo(selected.appliedAt)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Status</p>
-                  <ApplicationStatusBadge status={selected.status} />
+                  <p className="text-xs text-muted-foreground mb-1">Status</p>
+                  <ApplicationStatusSelect status={selected.status} onChange={(s) => updateStatus(selected.id, s)} disabled={updating} />
                 </div>
-                {selected.interviewDate && (
-                  <div className="col-span-2">
-                    <p className="text-xs text-muted-foreground">Interview date</p>
-                    <p className="font-medium">{new Date(selected.interviewDate).toLocaleString()}</p>
-                  </div>
-                )}
-                {selected.notes && (
-                  <div className="col-span-2">
-                    <p className="text-xs text-muted-foreground">Notes</p>
-                    <p className="text-sm">{selected.notes}</p>
-                  </div>
-                )}
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <Label className="text-xs">Interview date & time</Label>
+                <Input
+                  type="datetime-local"
+                  value={interviewDateDraft}
+                  onChange={(e) => setInterviewDateDraft(e.target.value)}
+                  className="text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Recruiter notes</Label>
+                <Textarea
+                  value={notesDraft}
+                  onChange={(e) => setNotesDraft(e.target.value)}
+                  placeholder="Add your notes about this candidate…"
+                  rows={3}
+                  className="text-sm"
+                />
               </div>
               <div className="flex items-center gap-2 pt-2">
                 <Button
-                  asChild
+                  onClick={saveDetails}
+                  disabled={updating}
                   className="flex-1"
                 >
+                  {updating ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <Check className="size-3.5 mr-1.5" />}
+                  Save details
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                >
                   <a href={`mailto:${selected.user?.email}?subject=Re: Your application for ${encodeURIComponent(selected.jobTitle ?? '')}`}>
-                    <ExternalLink className="size-3.5" /> Contact candidate
+                    <ExternalLink className="size-3.5" /> Contact
                   </a>
                 </Button>
                 <Button
@@ -1178,7 +1231,6 @@ function ApplicationsTab() {
                   onClick={() => setShortlisted((s) => ({ ...s, [selected.id]: !s[selected.id] }))}
                 >
                   <Star className={`size-3.5 ${shortlisted[selected.id] ? 'fill-current' : ''}`} />
-                  {shortlisted[selected.id] ? 'Shortlisted' : 'Shortlist'}
                 </Button>
               </div>
             </div>
@@ -1186,6 +1238,35 @@ function ApplicationsTab() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+// Status select dropdown for recruiter application management
+function ApplicationStatusSelect({ status, onChange, disabled }: { status: string; onChange: (s: string) => void; disabled?: boolean }) {
+  const statuses = [
+    { value: 'applied', label: 'Applied', color: 'bg-primary' },
+    { value: 'assessment', label: 'Assessment', color: 'bg-blue-500' },
+    { value: 'interview', label: 'Interview', color: 'bg-violet-500' },
+    { value: 'offer', label: 'Offer', color: 'bg-emerald-500' },
+    { value: 'rejected', label: 'Rejected', color: 'bg-destructive' },
+    { value: 'withdrawn', label: 'Withdrawn', color: 'bg-muted-foreground' },
+  ]
+  const current = statuses.find((s) => s.value === status)
+  return (
+    <Select value={status} onValueChange={onChange} disabled={disabled}>
+      <SelectTrigger className="h-8 text-xs w-[130px]">
+        <span className={`size-2 rounded-full ${current?.color ?? 'bg-muted'} mr-1.5`} />
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {statuses.map((s) => (
+          <SelectItem key={s.value} value={s.value} className="text-xs">
+            <span className={`size-2 rounded-full ${s.color} mr-2 inline-block`} />
+            {s.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }
 

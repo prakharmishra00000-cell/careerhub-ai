@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Bookmark, ClipboardList, Bell, Gauge, ArrowRight,
-  Clock, Sparkles, CheckCircle2,
+  Clock, Sparkles, CheckCircle2, TrendingUp,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { timeAgo } from '@/lib/jobs'
@@ -53,6 +53,7 @@ export function DashboardView() {
   const [savedCount, setSavedCount] = useState(0)
   const [alertCount, setAlertCount] = useState(0)
   const [profileCompletion, setProfileCompletion] = useState<number | null>(null)
+  const [profile, setProfile] = useState<any>(null)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
 
   useEffect(() => {
@@ -75,7 +76,7 @@ export function DashboardView() {
       if (appsR.status === 'fulfilled') setApps(appsR.value)
       if (saved.status === 'fulfilled') setSavedCount(saved.value.length)
       if (alerts.status === 'fulfilled') setAlertCount(alerts.value.filter((a) => !a.paused).length)
-      if (profile.status === 'fulfilled') setProfileCompletion(profile.value.completionPct)
+      if (profile.status === 'fulfilled') { setProfileCompletion(profile.value.completionPct); setProfile(profile.value) }
       if (notifs.status === 'fulfilled') setNotifications(notifs.value)
       // surface a single soft toast only if everything failed
       const failed = results.filter((r) => r.status === 'rejected')
@@ -266,6 +267,9 @@ export function DashboardView() {
             )}
           </Card>
 
+          {/* Salary trends widget */}
+          <SalaryTrendsWidget branch={profile?.branch} />
+
           {/* Notifications */}
           <Card className="p-5">
             <div className="flex items-center justify-between mb-3">
@@ -348,6 +352,96 @@ function EmptyState({ title, description, cta }: { title: string; description: s
       <p className="font-semibold">{title}</p>
       <p className="text-sm text-muted-foreground mt-1 mb-4 max-w-sm mx-auto">{description}</p>
       {cta}
+    </Card>
+  )
+}
+
+// ---------------- Salary trends widget ----------------
+function SalaryTrendsWidget({ branch }: { branch?: string | null }) {
+  const setView = useApp((s) => s.setView)
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      setLoading(true)
+      try {
+        const d = await api.salaryInsights(branch ? { branch } : undefined)
+        if (active) setData(d)
+      } catch { /* ignore */ }
+      finally { if (active) setLoading(false) }
+    }
+    load()
+    return () => { active = false }
+  }, [branch])
+
+  const fmtLPA = (n: number) => `₹${(n / 100000).toFixed(1)}L`
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <TrendingUp className="size-4 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm">Salary trends</h3>
+            <p className="text-[11px] text-muted-foreground">{branch ? `For ${branch}` : 'Across all branches'}</p>
+          </div>
+        </div>
+        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setView('salary-insights')}>
+          Details <ArrowRight className="size-3" />
+        </Button>
+      </div>
+      {loading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-full" />
+          <Skeleton className="h-6 w-3/4" />
+        </div>
+      ) : data && data.total > 0 ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-2">
+            <div className="text-center p-2 rounded-lg bg-muted/40">
+              <p className="text-[10px] text-muted-foreground">Avg</p>
+              <p className="text-sm font-bold text-primary">{fmtLPA(data.summary.avg)}</p>
+            </div>
+            <div className="text-center p-2 rounded-lg bg-muted/40">
+              <p className="text-[10px] text-muted-foreground">Median</p>
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{fmtLPA(data.summary.median)}</p>
+            </div>
+            <div className="text-center p-2 rounded-lg bg-muted/40">
+              <p className="text-[10px] text-muted-foreground">75th %ile</p>
+              <p className="text-sm font-bold text-violet-600 dark:text-violet-400">{fmtLPA(data.summary.p75)}</p>
+            </div>
+          </div>
+          {/* Mini distribution bar */}
+          <div>
+            <div className="flex items-end gap-1 h-12 mb-1">
+              {data.distribution.map((b: any, i: number) => {
+                const max = Math.max(...data.distribution.map((x: any) => x.count), 1)
+                const h = (b.count / max) * 100
+                return (
+                  <div
+                    key={i}
+                    className="flex-1 rounded-t-sm transition-all hover:opacity-80"
+                    style={{
+                      height: `${Math.max(h, 4)}%`,
+                      background: `oklch(0.45 0.18 264 / ${0.3 + (h / 100) * 0.7})`,
+                    }}
+                    title={`${b.label}: ${b.count} jobs`}
+                  />
+                )
+              })}
+            </div>
+            <p className="text-[10px] text-muted-foreground text-center">Salary distribution · {data.total} jobs</p>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-4">
+          <p className="text-xs text-muted-foreground">No salary data available for your branch yet.</p>
+        </div>
+      )}
     </Card>
   )
 }
