@@ -20,7 +20,7 @@ import {
 import {
   ArrowLeft, CheckCircle2, MapPin, Layers, Users, Building, Globe,
   Building2, Briefcase, ExternalLink, Sparkles, ShieldCheck, Info,
-  Star, Plus, ThumbsUp, ThumbsDown, Loader2,
+  Star, Plus, ThumbsUp, ThumbsDown, Loader2, GitCompare,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { timeAgo } from '@/lib/jobs'
@@ -135,6 +135,7 @@ export function CompanyDetailsView() {
                     </a>
                   )}
                 </div>
+                <CompanyCompareButton companyId={company.id} />
               </div>
             </Card>
 
@@ -635,5 +636,28 @@ function ReviewFormDialog({ companyId, companyName, onClose, onSubmitted }: {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+// ---------------- Company Compare Button ----------------
+function CompanyCompareButton({ companyId }: { companyId: string }) {
+  const { toggleCompanyCompare, companyCompareIds, openCompanyCompare } = useApp()
+  const comparing = companyCompareIds.includes(companyId)
+  return (
+    <div className="absolute top-4 right-4 flex items-center gap-1.5">
+      <Button
+        size="sm"
+        variant={comparing ? 'default' : 'outline'}
+        className={`h-8 text-xs gap-1.5 ${comparing ? 'bg-violet-500 hover:bg-violet-500/90' : ''}`}
+        onClick={() => toggleCompanyCompare(companyId)}
+      >
+        <GitCompare className="size-3.5" /> {comparing ? 'In comparison' : 'Compare'}
+      </Button>
+      {companyCompareIds.length >= 2 && (
+        <Button size="sm" className="h-8 text-xs gap-1.5" onClick={openCompanyCompare}>
+          Compare ({companyCompareIds.length})
+        </Button>
+      )}
+    </div>
   )
 }

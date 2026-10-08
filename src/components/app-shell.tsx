@@ -28,6 +28,7 @@ import { Footer } from '@/components/footer'
 import { AuthModal } from '@/components/auth-modal'
 import { CommandPalette } from '@/components/command-palette'
 import { CompareBar } from '@/components/compare-bar'
+import { CompanyCompareBar } from '@/components/company-compare-bar'
 import { OnboardingWizard } from '@/components/onboarding-wizard'
 
 export function AppShell() {
@@ -182,6 +183,7 @@ export function AppShell() {
       <AuthModal />
       <CommandPalette />
       <CompareBar />
+      <CompanyCompareBar />
       <OnboardingWizard open={onboardingOpen} onComplete={handleOnboardingComplete} onSkip={handleOnboardingSkip} />
     </div>
   )

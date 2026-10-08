@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select'
 import {
   Building2, Search, CheckCircle2, MapPin, Briefcase, ChevronLeft, ChevronRight,
-  Building, ShieldCheck, Layers, Users, X,
+  Building, ShieldCheck, Layers, Users, X, GitCompare,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { CompanyListItem } from '@/lib/types'
@@ -219,10 +219,12 @@ export function CompaniesView() {
 }
 
 function CompanyCard({ company, onOpen }: { company: CompanyListItem; onOpen: () => void }) {
+  const { toggleCompanyCompare, companyCompareIds } = useApp()
+  const comparing = companyCompareIds.includes(company.id)
   const initials = company.name.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase()).join('')
   return (
     <Card
-      className="card-hover p-0 overflow-hidden cursor-pointer group border-border/70 hover:border-primary/30"
+      className={`card-hover p-0 overflow-hidden cursor-pointer group border-border/70 hover:border-primary/30 ${comparing ? 'ring-2 ring-violet-500/30 border-violet-500/30' : ''}`}
       onClick={onOpen}
     >
       <div className="p-5">
@@ -237,7 +239,17 @@ function CompanyCard({ company, onOpen }: { company: CompanyListItem; onOpen: ()
               <h3 className="font-semibold text-[15px] leading-snug tracking-tight group-hover:text-primary transition-colors line-clamp-1">
                 {company.name}
               </h3>
-              {company.verified && <CheckCircle2 className="size-4 text-primary shrink-0" />}
+              <div className="flex items-center gap-0.5 shrink-0">
+                {company.verified && <CheckCircle2 className="size-4 text-primary shrink-0" />}
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleCompanyCompare(company.id) }}
+                  className={`size-7 inline-flex items-center justify-center rounded-full hover:bg-accent transition-colors ${comparing ? 'text-violet-500 bg-accent' : 'text-muted-foreground'}`}
+                  title={comparing ? 'Remove from comparison' : 'Add to comparison'}
+                  aria-label={comparing ? 'Remove from comparison' : 'Add to comparison'}
+                >
+                  <GitCompare className="size-3.5" />
+                </button>
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs text-muted-foreground">
               {company.industry && <span className="inline-flex items-center gap-1"><Layers className="size-3" /> {company.industry}</span>}
