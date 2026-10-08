@@ -30,6 +30,7 @@ import { CommandPalette } from '@/components/command-palette'
 import { CompareBar } from '@/components/compare-bar'
 import { CompanyCompareBar } from '@/components/company-compare-bar'
 import { OnboardingWizard } from '@/components/onboarding-wizard'
+import { KeyboardShortcutsHelp } from '@/components/keyboard-shortcuts-help'
 
 export function AppShell() {
   const view = useApp((s) => s.view)
@@ -185,6 +186,7 @@ export function AppShell() {
       <CompareBar />
       <CompanyCompareBar />
       <OnboardingWizard open={onboardingOpen} onComplete={handleOnboardingComplete} onSkip={handleOnboardingSkip} />
+      <KeyboardShortcutsHelp />
     </div>
   )
 }

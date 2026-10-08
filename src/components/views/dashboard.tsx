@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import {
   Bookmark, ClipboardList, Bell, Gauge, ArrowRight,
   Clock, Sparkles, CheckCircle2, TrendingUp, Search,
+  Bot, FileText, Brain, Map, Wrench, Zap, Briefcase,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { timeAgo } from '@/lib/jobs'
@@ -55,6 +56,7 @@ export function DashboardView() {
   const [profileCompletion, setProfileCompletion] = useState<number | null>(null)
   const [profile, setProfile] = useState<any>(null)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [recReasons, setRecReasons] = useState<string[]>([])
 
   useEffect(() => {
     let active = true
@@ -68,14 +70,16 @@ export function DashboardView() {
 
       // Build personalized filter from profile
       const recFilter: any = { sort: 'best_match', pageSize: 6 }
-      if (prof?.branch) recFilter.branch = [prof.branch]
-      if (prof?.degree) recFilter.degree = [prof.degree]
-      if (prof?.fresherFriendly !== undefined && prof?.experienceKind === 'fresher') recFilter.fresherFriendly = true
+      const reasons: string[] = []
+      if (prof?.branch) { recFilter.branch = [prof.branch]; reasons.push(prof.branch) }
+      if (prof?.degree) { recFilter.degree = [prof.degree]; reasons.push(prof.degree) }
+      if (prof?.fresherFriendly !== undefined && prof?.experienceKind === 'fresher') { recFilter.fresherFriendly = true; reasons.push('Fresher') }
       if (prof?.preferredLocations) {
         const locs = prof.preferredLocations.split(',').map((s: string) => s.trim()).filter(Boolean)
-        if (locs.length) recFilter.location = locs[0]
+        if (locs.length) { recFilter.location = locs[0]; reasons.push(locs[0]) }
       }
-      if (prof?.remotePreference && prof.remotePreference !== 'any') recFilter.remoteType = [prof.remotePreference]
+      if (prof?.remotePreference && prof.remotePreference !== 'any') { recFilter.remoteType = [prof.remotePreference]; reasons.push(prof.remotePreference.replace(/_/g, ' ')) }
+      if (active) setRecReasons(reasons)
 
       const results = await Promise.allSettled([
         api.jobs(recFilter),
@@ -186,6 +190,9 @@ export function DashboardView() {
         </Card>
       )}
 
+      {/* Quick actions */}
+      <QuickActionsCard />
+
       {/* Main grid */}
       <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Main col */}
@@ -200,7 +207,7 @@ export function DashboardView() {
                 <div>
                   <h2 className="text-lg font-semibold tracking-tight">Recommended for you</h2>
                   <p className="text-xs text-muted-foreground">
-                    {profile?.branch ? <>Matched to <span className="font-medium text-foreground/80">{profile.branch}</span> · {profile?.preferredLocations?.split(',')[0]?.trim() ?? 'your area'}</> : 'Based on fresh listings'}
+                    {recReasons.length > 0 ? <>Matched to <span className="font-medium text-foreground/80">{recReasons.slice(0, 3).join(' · ')}</span></> : 'Based on fresh listings'}
                   </p>
                 </div>
               </div>
@@ -208,6 +215,17 @@ export function DashboardView() {
                 View all <ArrowRight className="size-3.5" />
               </Button>
             </div>
+            {/* Recommendation reason badges */}
+            {recReasons.length > 0 && !loading && recommended.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Matched by</span>
+                {recReasons.map((r, i) => (
+                  <span key={i} className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-medium">
+                    <Sparkles className="size-2.5" /> {r}
+                  </span>
+                ))}
+              </div>
+            )}
             {loading ? (
               <div className="grid sm:grid-cols-2 gap-3">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -631,6 +649,46 @@ function RecentlyViewedJobs() {
           ))}
         </div>
       )}
+    </Card>
+  )
+}
+
+// ---------------- Quick Actions Card ----------------
+function QuickActionsCard() {
+  const setView = useApp((s) => s.setView)
+  const actions = [
+    { icon: Search, label: 'Search jobs', view: 'search' as const, color: 'bg-primary/10 text-primary' },
+    { icon: Bot, label: 'AI Assistant', view: 'career-ai' as const, color: 'bg-violet-500/10 text-violet-500' },
+    { icon: FileText, label: 'Resume tools', view: 'resume' as const, color: 'bg-emerald-500/10 text-emerald-500' },
+    { icon: Brain, label: 'Interview prep', view: 'interview-prep' as const, color: 'bg-amber-500/10 text-amber-500' },
+    { icon: Map, label: 'Career roadmap', view: 'career-roadmap' as const, color: 'bg-rose-500/10 text-rose-500' },
+    { icon: Wrench, label: 'Skill gap', view: 'skill-gap' as const, color: 'bg-blue-500/10 text-blue-500' },
+  ]
+  return (
+    <Card className="p-5 mb-6">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="size-7 rounded-lg bg-primary/10 flex items-center justify-center">
+          <Zap className="size-4 text-primary" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold">Quick actions</h3>
+          <p className="text-[11px] text-muted-foreground">Jump to your tools</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+        {actions.map((a) => (
+          <button
+            key={a.view}
+            onClick={() => setView(a.view)}
+            className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/60 hover:border-primary/30 hover:bg-accent/30 transition-colors group"
+          >
+            <div className={`size-9 rounded-lg flex items-center justify-center ${a.color} group-hover:scale-110 transition-transform`}>
+              <a.icon className="size-4" />
+            </div>
+            <span className="text-[11px] font-medium text-center leading-tight">{a.label}</span>
+          </button>
+        ))}
+      </div>
     </Card>
   )
 }
