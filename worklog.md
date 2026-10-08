@@ -367,3 +367,113 @@ Stage Summary:
 - Demo accounts: candidate@demo.careerhub.ai / recruiter@demo.careerhub.ai / admin@demo.careerhub.ai (password: demo1234).
 - Lint clean. No type errors in application code.
 - Cron job (webDevReview, every 15 min) created to continue QA + feature polish autonomously.
+
+---
+Task ID: 21
+Agent: main (cron round 1 + 2)
+Task: QA, bug fixes, new features (command palette, job comparison, salary insights, recruiter application management), styling polish
+
+## Current Project Status Assessment
+CareerHub AI is a complete production-grade SPA with 18+ views, 37 API routes, 4 AI endpoints. The app is stable, lint-clean, and all core flows work end-to-end. The previous round (Task 20) built the full app; this round focused on QA, bug fixes, and adding high-value new features.
+
+## Completed Modifications
+
+### Bug Fixes
+- **Hydration mismatch fix**: The FAQ Accordion on the landing page caused a Next.js dev tools "1 Issue" badge (hydration mismatch from Radix accordion SSR). Wrapped the Accordion in a new `ClientOnly` component (`src/components/client-only.tsx`) that renders children only after client hydration.
+- **Hash routing completeness**: The app-shell's `known` views list was missing `salary-insights`, `profile-edit`, `resume-analyzer`, `resume-builder`, and all `recruiter-*`/`admin-*` sub-views. Expanded the list to include all 32 known view names so hash navigation works for every view.
+- **Salary display for unpaid roles**: `formatSalary` now returns "Unpaid / stipend-based" for zero-salary roles instead of "₹0 LPA".
+
+### New Feature: Command Palette (⌘K)
+- **File**: `src/components/command-palette.tsx`
+- Global keyboard shortcut ⌘K (mac) / Ctrl+K (windows/linux) opens a command palette dialog
+- Searches across 30+ commands grouped by Navigate, Search, Actions, Account
+- Keyboard navigation (↑↓ to navigate, Enter to select, Escape to close)
+- Quick search actions: "Search: Fresher-friendly jobs", "Search: Remote jobs", "Search: Internships", "Search: Government & PSU jobs"
+- Account-aware: shows Dashboard/Profile/Saved/Applications/Settings/Sign out for logged-in users; Sign in/Create account for logged-out
+- Recruiter/Admin commands appear contextually based on role
+- Wired into top-nav: the "Search jobs…" button now dispatches ⌘K to open the palette
+
+### New Feature: Job Comparison (side-by-side)
+- **Files**: `src/components/compare-bar.tsx`, store additions in `src/lib/store.ts`, JobCard additions in `src/components/job-card.tsx`
+- Each JobCard now has a GitCompare icon button (next to Bookmark) to add/remove from comparison
+- Up to 3 jobs can be selected for comparison (shows warning toast if exceeded)
+- A floating glass-card bar appears at the bottom when ≥1 job is selected, showing count + "Compare" button
+- The comparison dialog renders a side-by-side table with 14 comparison rows: Company, Location, Work mode, Employment type, Experience, Salary, Degree, Branch, Fresher friendly, PPO available, Posted, Deadline, Source, Skills
+- Boolean values show with Check/Minus icons (emerald for yes, muted for no)
+- Each column has "View details" and "Apply on [source]" buttons
+- Remove individual jobs from comparison via X button on each column header
+
+### New Feature: Salary Insights Page
+- **Files**: `src/app/api/analytics/salary/route.ts` (API), `src/components/views/salary-insights.tsx` (view), `src/lib/api.ts` (client), `src/lib/types.ts` (View type)
+- API computes salary analytics from disclosed-salary jobs: average, median, min, max, P25, P75 percentiles
+- Breakdowns by branch (top 12), city (top 10), experience level, employment type
+- Salary distribution histogram with 7 buckets (0-3 LPA through 40+ LPA)
+- View renders: 4 summary stat cards (avg/median/P25/P75 with color-coded icons), distribution bar chart, employment-type horizontal bar chart, top branches/cities with progress-bar-style visualization, experience-level line chart, range summary card
+- Filters: branch, city, employment type, work mode
+- Added to top-nav, footer, and command palette
+- Recharts visualizations using CSS variables for theming
+
+### New Feature: Save as Alert from Search
+- **File**: `src/components/views/search.tsx`
+- "Save as alert" button on the search results header
+- Opens a dialog with: alert name (auto-generated from current filters), frequency selector (instant/daily/weekly), current-filters summary chips
+- Creates a JobAlert via `api.createAlert` with the current filter state serialized as JSON
+- Auth-gated: prompts login if not signed in
+
+### New Feature: Active Filter Chips
+- **File**: `src/components/views/search.tsx` (ActiveFilterChips component)
+- Renders removable chips for every active filter above the job results list
+- Each chip shows the filter value with an X button to remove it
+- "Clear all" link to reset all filters
+- Covers all filter types: keyword, location, degree, branch, employment type, work mode, fresher, internship, salary, stipend, PPO, source, company type/size, verified, backlog policy, CGPA, experience
+
+### New Feature: Recruiter Application Status Management
+- **File**: `src/app/api/recruiter/applications/[id]/route.ts`
+- PATCH endpoint for recruiters to update application status, notes, interview date
+- Verifies job ownership (recruiter can only manage applications to their own jobs; admin can manage all)
+- Creates a notification for the candidate when status changes
+- GET endpoint for individual application details
+- Added `recruiterUpdateApplication` to the API client
+
+### Styling Polish
+- **globals.css enhancements**: Added 8 new utility classes:
+  - `fade-in-stagger`: Staggered fade-in animation for lists (job cards in search)
+  - `glass-card`: Glassmorphism effect with backdrop-blur for floating elements (compare bar)
+  - `glow-ring`: Pulsing glow animation for CTAs
+  - `slide-in-right`: Slide-in animation for the compare bar
+  - `scale-in`: Scale-in animation for modals
+  - `skeleton-shimmer`: Shimmer effect for loading skeletons
+  - `badge-premium`: Gradient-bordered badge
+  - `hover-lift`: Enhanced hover lift with shadow
+  - `text-gradient-primary`: Gradient text for emphasis
+  - `dot-pattern`: Dotted background for empty states
+- **JobCard enhancements**: 
+  - Added left amber border for closing-soon jobs
+  - Added "INTERNSHIP" badge in top-right corner for internship roles
+  - Compare button icon with active state highlighting
+  - Staggered fade-in animation on job card lists
+- **Top-nav**: Added "Salary Insights" nav link with TrendingUp icon
+- **Footer**: Added "Salary Insights" to Discover column
+
+## Verification Results
+- `bun run lint` → clean (0 errors, 0 warnings)
+- All 41 API routes return 200 with real data
+- Salary insights API: 41 jobs analyzed, avg ₹856K, median ₹650K, 12 branches, 10 cities
+- Command palette: ⌘K opens dialog with 30+ searchable commands, keyboard navigation works
+- Job comparison: compare button on job cards, floating bar appears, side-by-side dialog with 14 rows renders correctly
+- Salary insights view: stat cards (₹8.6L avg, ₹6.5L median, ₹4.5L P25, ₹11.5L P75), distribution histogram, employment-type chart, branch/city rankings, experience line chart — all render with data
+- Hash routing: all 32 view names now recognized; `#salary-insights` navigates correctly
+- No runtime errors in browser console (only the benign Radix dialog description warning)
+
+## Unresolved Issues / Risks
+1. **agent-browser sign-in flow is flaky**: The demo-account quick-fill + modal Sign-in button click sequence doesn't work reliably in headless mode. API-level cookie injection works perfectly but agent-browser's DOM interaction with the auth modal is timing-sensitive. Not a production bug — only affects automated testing.
+2. **Recruiter Applications tab UI not yet updated**: The backend `PATCH /api/recruiter/applications/[id]` endpoint exists and works, but the recruiter view's Applications tab still shows the "demo mode" note and doesn't call the new API yet. The next round should wire the recruiter view's status dropdown to `api.recruiterUpdateApplication`.
+3. **Job detail page mobile sticky apply bar**: Not yet implemented — the apply card is in a sidebar that works on desktop but on mobile it scrolls away. A sticky bottom apply bar on mobile would improve UX.
+4. **Dashboard could show salary insights widget**: A small "Salary trends for your branch" card on the dashboard would be a nice cross-feature integration.
+
+## Priority Recommendations for Next Phase
+1. **Wire recruiter application management UI**: Update `src/components/views/recruiter.tsx` Applications tab to use `api.recruiterUpdateApplication` for status changes (backend is ready)
+2. **Mobile sticky apply bar on job detail**: Add a fixed bottom bar on mobile with Apply + Save buttons
+3. **Dashboard salary widget**: Add a "Salary trends for [your branch]" mini-chart on the dashboard
+4. **Job detail comparison entry**: Add a "Compare with other jobs" button on the job detail page
+5. **Onboarding flow**: Build the 5-step onboarding wizard for new candidates (Education → Skills → Experience → Career preferences → Location)

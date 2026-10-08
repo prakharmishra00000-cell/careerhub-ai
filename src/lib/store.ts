@@ -29,6 +29,9 @@ interface AppState {
   notificationsVersion: number
   // AI assistant
   assistantTurns: AIAssistantTurn[]
+  // job comparison
+  compareIds: string[]
+  compareOpen: boolean
   // theme is handled by next-themes
 
   // actions
@@ -50,6 +53,10 @@ interface AppState {
   bumpSaved: () => void
   bumpApplications: () => void
   refreshNotifications: () => Promise<void>
+  toggleCompare: (id: string) => void
+  clearCompare: () => void
+  openCompare: () => void
+  closeCompare: () => void
   addAssistantTurn: (t: AIAssistantTurn) => void
   clearAssistant: () => void
 }
@@ -72,6 +79,8 @@ export const useApp = create<AppState>((set, get) => ({
   notifications: [],
   notificationsVersion: 0,
   assistantTurns: [],
+  compareIds: [],
+  compareOpen: false,
 
   setView: (v) => { set({ view: v }); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) },
   openJob: (id) => { set({ selectedJobId: id, view: 'job' }); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) },
@@ -165,4 +174,14 @@ export const useApp = create<AppState>((set, get) => ({
 
   addAssistantTurn: (t) => set((s) => ({ assistantTurns: [...s.assistantTurns, t] })),
   clearAssistant: () => set({ assistantTurns: [] }),
+
+  toggleCompare: (id) => set((s) => {
+    const exists = s.compareIds.includes(id)
+    if (exists) return { compareIds: s.compareIds.filter((x) => x !== id) }
+    if (s.compareIds.length >= 3) { toast.warning('You can compare up to 3 jobs at a time'); return {} }
+    return { compareIds: [...s.compareIds, id] }
+  }),
+  clearCompare: () => set({ compareIds: [] }),
+  openCompare: () => set({ compareOpen: true }),
+  closeCompare: () => set({ compareOpen: false }),
 }))

@@ -88,6 +88,7 @@ export const api = {
   recruiterUpdateJob: (id: string, body: any) => jfetch<any>(`/api/recruiter/jobs/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   recruiterDeleteJob: (id: string) => jfetch<{ ok: boolean }>(`/api/recruiter/jobs/${id}`, { method: 'DELETE' }),
   recruiterApplications: () => jfetch<any[]>('/api/recruiter/applications'),
+  recruiterUpdateApplication: (id: string, body: any) => jfetch<any>(`/api/recruiter/applications/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
 
   // admin
   adminMetrics: () => jfetch<AdminMetrics>('/api/admin/metrics'),
@@ -108,4 +109,11 @@ export const api = {
     jfetch<any>('/api/ai/resume-analyze', { method: 'POST', body: JSON.stringify({ resumeText, targetRole }) }),
   aiMatchScore: (jobId: string) =>
     jfetch<{ summary: string; strengths: string[]; gaps: string[]; eligibilityWarnings: string[]; job: JobCardData }>('/api/ai/match-score', { method: 'POST', body: JSON.stringify({ jobId }) }),
+
+  // analytics
+  salaryInsights: (params?: { branch?: string; city?: string; employmentType?: string; remoteType?: string }) => {
+    const p = new URLSearchParams()
+    if (params) Object.entries(params).forEach(([k, v]) => { if (v) p.set(k, v) })
+    return jfetch<any>(`/api/analytics/salary?${p.toString()}`)
+  },
 }

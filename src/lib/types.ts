@@ -34,6 +34,7 @@ export type View =
   | 'remote-jobs'
   | 'freshers'
   | 'government-jobs'
+  | 'salary-insights'
 
 export interface SessionUser {
   id: string

@@ -32,6 +32,7 @@ export function Footer() {
             { label: 'Fresher jobs', view: 'freshers' as const },
             { label: 'Government jobs', view: 'government-jobs' as const },
             { label: 'Companies', view: 'companies' as const },
+            { label: 'Salary Insights', view: 'salary-insights' as const },
           ]} />
           <FooterCol title="Candidate" links={[
             { label: 'Dashboard', view: 'dashboard' as const },

@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Bookmark, MapPin, Clock, Briefcase, GraduationCap, ExternalLink, CheckCircle2, AlertTriangle, Building2, Sparkles, Trophy, IndianRupee } from 'lucide-react'
+import { Bookmark, MapPin, Clock, Briefcase, GraduationCap, ExternalLink, CheckCircle2, AlertTriangle, Building2, Sparkles, Trophy, IndianRupee, GitCompare } from 'lucide-react'
 import { formatSalary, formatStipend, timeAgo, daysUntil, freshnessLabel, employmentTypeLabel, remoteTypeLabel } from '@/lib/jobs'
 
 interface Props {
@@ -19,9 +19,10 @@ interface Props {
 }
 
 export function JobCard({ job, variant = 'default', saved: savedProp, onOpen }: Props) {
-  const { openJob, openCompany, saveJob, unsaveJob, user, applyJob, openAuth } = useApp()
+  const { openJob, openCompany, saveJob, unsaveJob, user, applyJob, openAuth, compareIds, toggleCompare } = useApp()
   const [saved, setSaved] = useState(savedProp ?? false)
   const [saving, setSaving] = useState(false)
+  const comparing = compareIds.includes(job.id)
 
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -30,6 +31,11 @@ export function JobCard({ job, variant = 'default', saved: savedProp, onOpen }: 
     if (saved) { await unsaveJob(job.id); setSaved(false) }
     else { await saveJob(job.id); setSaved(true) }
     setSaving(false)
+  }
+
+  const handleCompare = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    toggleCompare(job.id)
   }
 
   const handleApply = async (e: React.MouseEvent) => {
@@ -75,15 +81,25 @@ export function JobCard({ job, variant = 'default', saved: savedProp, onOpen }: 
                   {job.companyVerified && <CheckCircle2 className="size-3.5 text-primary shrink-0" />}
                 </button>
               </div>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className={`size-8 inline-flex items-center justify-center rounded-full hover:bg-accent transition-colors shrink-0 ${saved ? 'text-primary' : 'text-muted-foreground'}`}
-                aria-label={saved ? 'Unsave' : 'Save'}
-                title={saved ? 'Saved' : 'Save job'}
-              >
-                <Bookmark className={`size-4 ${saved ? 'fill-current' : ''}`} />
-              </button>
+              <div className="flex items-center gap-0.5 shrink-0">
+                <button
+                  onClick={handleCompare}
+                  className={`size-8 inline-flex items-center justify-center rounded-full hover:bg-accent transition-colors ${comparing ? 'text-primary bg-accent' : 'text-muted-foreground'}`}
+                  aria-label={comparing ? 'Remove from comparison' : 'Add to comparison'}
+                  title={comparing ? 'In comparison' : 'Compare'}
+                >
+                  <GitCompare className={`size-4 ${comparing ? 'text-primary' : ''}`} />
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className={`size-8 inline-flex items-center justify-center rounded-full hover:bg-accent transition-colors ${saved ? 'text-primary' : 'text-muted-foreground'}`}
+                  aria-label={saved ? 'Unsave' : 'Save'}
+                  title={saved ? 'Saved' : 'Save job'}
+                >
+                  <Bookmark className={`size-4 ${saved ? 'fill-current' : ''}`} />
+                </button>
+              </div>
             </div>
           </div>
         </div>

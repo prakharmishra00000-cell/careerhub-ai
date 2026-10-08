@@ -15,6 +15,7 @@ import { ResumeView } from '@/components/views/resume'
 import { CareerAIView } from '@/components/views/career-ai'
 import { CompaniesView } from '@/components/views/companies'
 import { CompanyDetailsView } from '@/components/views/company-details'
+import { SalaryInsightsView } from '@/components/views/salary-insights'
 import { RecruiterView } from '@/components/views/recruiter'
 import { AdminView } from '@/components/views/admin'
 import { SettingsView } from '@/components/views/settings'
@@ -23,6 +24,7 @@ import { MobileBottomNav } from '@/components/mobile-bottom-nav'
 import { Footer } from '@/components/footer'
 import { AuthModal } from '@/components/auth-modal'
 import { CommandPalette } from '@/components/command-palette'
+import { CompareBar } from '@/components/compare-bar'
 
 export function AppShell() {
   const view = useApp((s) => s.view)
@@ -42,7 +44,7 @@ export function AppShell() {
       const [view, id] = h.split('/')
       if (view && view !== useApp.getState().view) {
         // only accept known views
-        const known = ['landing', 'search', 'job', 'dashboard', 'profile', 'saved', 'applications', 'alerts', 'resume', 'career-ai', 'companies', 'company', 'recruiter', 'admin', 'settings']
+        const known = ['landing', 'search', 'job', 'dashboard', 'profile', 'profile-edit', 'saved', 'applications', 'alerts', 'resume', 'resume-analyzer', 'resume-builder', 'career-ai', 'companies', 'company', 'recruiter', 'recruiter-jobs', 'recruiter-new-job', 'recruiter-applications', 'admin', 'admin-users', 'admin-jobs', 'admin-sources', 'admin-companies', 'admin-reports', 'admin-analytics', 'settings', 'internships', 'remote-jobs', 'freshers', 'government-jobs', 'salary-insights']
         if (known.includes(view)) {
           useApp.getState().setView(view as any)
           if (id) {
@@ -94,6 +96,7 @@ export function AppShell() {
     case 'career-ai': content = <CareerAIView />; break
     case 'companies': content = <CompaniesView />; break
     case 'company': content = <CompanyDetailsView />; break
+    case 'salary-insights': content = <SalaryInsightsView />; break
     case 'recruiter':
     case 'recruiter-jobs':
     case 'recruiter-new-job':
@@ -141,6 +144,7 @@ export function AppShell() {
       <MobileBottomNav />
       <AuthModal />
       <CommandPalette />
+      <CompareBar />
     </div>
   )
 }
