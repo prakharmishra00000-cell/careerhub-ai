@@ -37,6 +37,7 @@ export type View =
   | 'salary-insights'
   | 'interview-prep'
   | 'career-roadmap'
+  | 'skill-gap'
 
 export interface SessionUser {
   id: string

@@ -144,6 +144,9 @@ export function LandingView() {
         </div>
       </section>
 
+      {/* ===== BROWSE BY INDUSTRY ===== */}
+      <BrowseByIndustry />
+
       {/* ===== HOW IT WORKS ===== */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center max-w-2xl mx-auto mb-12">
@@ -371,6 +374,91 @@ function TrendingJobs() {
               </Card>
             </button>
           ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+// ---------------- Browse by Industry ----------------
+function BrowseByIndustry() {
+  const { setView, setFilter, runSearch } = useApp()
+  const [industries, setIndustries] = useState<{ industry: string; count: number }[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      setLoading(true)
+      try {
+        const res = await api.companies({ pageSize: 200 })
+        if (!active) return
+        // Count companies per industry
+        const counts: Record<string, number> = {}
+        res.companies.forEach((c: any) => {
+          if (c.industry) counts[c.industry] = (counts[c.industry] ?? 0) + 1
+        })
+        const sorted = Object.entries(counts)
+          .map(([industry, count]) => ({ industry, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 12)
+        setIndustries(sorted)
+      } catch {}
+      finally { if (active) setLoading(false) }
+    }
+    load()
+    return () => { active = false }
+  }, [])
+
+  const industryIcons: Record<string, any> = {
+    IT: Briefcase, Software: Cpu, Finance: TrendingUp, Healthcare: ShieldCheck,
+    Manufacturing: Building2, Government: ShieldCheck, Consulting: Users,
+    Design: Sparkles, Education: GraduationCap, Research: Cpu, Logistics: Globe,
+    Agriculture: Globe, Energy: Zap, Biotechnology: Cpu,
+  }
+
+  const go = (industry: string) => {
+    // Search jobs by company type matching this industry
+    setFilter({ q: industry, page: 1 }, { replace: true })
+    setView('search')
+    runSearch()
+  }
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Browse by industry</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Explore opportunities across {industries.length}+ industries</p>
+      </div>
+      {loading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 fade-in-stagger">
+          {industries.map((item) => {
+            const Icon = industryIcons[item.industry] ?? Building2
+            return (
+              <button
+                key={item.industry}
+                onClick={() => go(item.industry)}
+                className="group text-left"
+              >
+                <Card className="p-4 h-full card-hover border-border/70 hover:border-primary/30 relative overflow-hidden">
+                  <div className="absolute -right-4 -top-4 size-16 rounded-full bg-primary/5 group-hover:bg-primary/10 transition-colors" />
+                  <div className="relative flex items-start gap-3">
+                    <div className="size-10 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shrink-0 group-hover:from-primary/25 group-hover:to-primary/10 transition-colors">
+                      <Icon className="size-5 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{item.industry}</h3>
+                      <p className="text-xs text-muted-foreground">{item.count} compan{item.count === 1 ? 'y' : 'ies'}</p>
+                    </div>
+                  </div>
+                </Card>
+              </button>
+            )
+          })}
         </div>
       )}
     </section>

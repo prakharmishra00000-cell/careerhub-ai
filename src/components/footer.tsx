@@ -47,6 +47,7 @@ export function Footer() {
             { label: 'Resume analyzer', view: 'resume' as const },
             { label: 'Interview Prep', view: 'interview-prep' as const },
             { label: 'Career Roadmap', view: 'career-roadmap' as const },
+            { label: 'Skill Gap Analysis', view: 'skill-gap' as const },
             { label: 'Recruiter portal', view: 'recruiter' as const },
             { label: 'Admin', view: 'admin' as const },
           ]} />

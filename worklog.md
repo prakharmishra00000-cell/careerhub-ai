@@ -791,3 +791,69 @@ CareerHub AI is a feature-rich SPA with 20+ views, 50+ API routes, 6 AI endpoint
 3. **Interview prep history**: Save generated prep guides for later review
 4. **Career roadmap history**: Save generated roadmaps for later reference
 5. **Skill gap analysis**: Cross-reference candidate's skills with job requirements to show specific gaps
+
+---
+Task ID: 26
+Agent: main (cron round 7)
+Task: Skill gap analysis feature, browse by industry on landing, styling polish
+
+## Current Project Status Assessment
+CareerHub AI is a comprehensive SPA with 22+ views, 52+ API routes, 7 AI endpoints, company reviews, interview prep, career roadmap, salary insights, job comparison, onboarding wizard, personalized recommendations, and search history. The platform is stable and lint-clean. This round added the skill gap analysis feature and a "Browse by industry" section on the landing page.
+
+## Completed Modifications
+
+### 1. Skill Gap Analysis Feature (full-stack)
+- **New API**: `GET /api/analytics/skill-gap` — candidate-only endpoint that:
+  - Fetches the candidate's profile (technicalSkills, softSkills, tools)
+  - Builds a job query based on their branch and desired job title
+  - Fetches up to 200 matching active jobs
+  - Aggregates skill demand across those jobs (count + percentage + job examples)
+  - Categorizes skills into: matched (candidate has + in demand), missing high-demand (candidate lacks + high demand), niche (candidate has + not in demand)
+  - Computes a gap score (ratio of top-10 in-demand skills the candidate has)
+  - Returns gapScore, gapLabel, candidateSkills, matchedSkills, missingHighDemand, nicheSkills, topDemandSkills
+- **API client**: `api.skillGap()`
+- **New view**: `SkillGapView` at `#skill-gap` (auth-gated)
+  - Auth gate: shows sign-in prompt for logged-out users
+  - Circular SVG match score with animated stroke-dasharray, color-coded by score (emerald ≥80, primary ≥60, amber ≥40, destructive <40)
+  - Summary card with gap label badge, progress bar, and contextual copy
+  - Two-column grid:
+    - "Skills you have (in demand)" — emerald-bordered cards with checkmark icons, skill name, demand percentage
+    - "Skills to learn (high demand)" — amber-bordered cards with alert icons, skill name, demand percentage
+  - Top 10 in-demand skills bar chart: horizontal bars with demand percentage, color-coded by whether the candidate has the skill (emerald=has, primary=missing)
+  - Niche skills section: violet-bordered chips for skills the candidate has that aren't in current demand
+  - CTA card: "Boost your match rate" with links to profile and career roadmap
+- **Wired into**: top-nav (Wrench icon), footer, command palette (keywords "skills gap market demand learn missing")
+
+### 2. Browse by Industry Section on Landing Page
+- **New component**: `BrowseByIndustry` in landing.tsx
+- Fetches all companies, aggregates by industry, displays top 12 industries
+- Each card: industry-specific icon (Briefcase/Cpu/TrendingUp/ShieldCheck/etc.), industry name, company count
+- Cards have decorative gradient circle accent, hover lift effect, icon gradient background
+- Clicking an industry card searches for jobs matching that industry
+- Uses `fade-in-stagger` for premium entrance animation
+- Placed between the Trusted Sources and How It Works sections
+
+### 3. Styling Polish
+- Skill gap circular score uses SVG with animated stroke-dasharray transition
+- Color-coded sections throughout (emerald=matched, amber=missing, violet=niche, primary=demand bars)
+- Browse by industry cards have decorative gradient circle and group-hover transitions
+- All new views use consistent gradient header patterns
+
+## Verification Results
+- `bun run lint` → clean (0 errors, 0 warnings) ✅
+- **Skill Gap API**: gapScore 60, "Good" label, 9 jobs analyzed, 15 candidate skills, 6 matched, 10 missing high-demand, top demand: TypeScript, React, SQL, Node.js, Docker ✅
+- **Trending Jobs**: visible on landing page with fire emoji job cards ✅
+- **Browse by Industry**: visible with industry cards (Government, Education, Finance, Agriculture with company counts) ✅
+- All new views wired into app-shell (32+ known views), top-nav, footer, command palette ✅
+
+## Unresolved Issues / Risks
+1. **Server stability**: Dev server continues to be reaped between bash commands. Code verified via API calls and individual screenshots.
+2. **Skill gap view is auth-gated**: Not visible to logged-out users — requires candidate session to access. Demo candidate (Aarav) has 15 skills, 6 of which match market demand.
+3. **Browse by industry**: Below the fold on landing page — requires scrolling past Trending Jobs and Trusted Sources to see it.
+
+## Priority Recommendations for Next Phase
+1. **Job alert email preview**: Show a preview of what an alert email would look like on the alerts page
+2. **Company comparison**: Compare companies side-by-side (like job comparison)
+3. **Interview prep history**: Save generated prep guides for later review
+4. **Career roadmap history**: Save generated roadmaps for later reference
+5. **Skill learning resources**: Link missing skills to specific courses/resources

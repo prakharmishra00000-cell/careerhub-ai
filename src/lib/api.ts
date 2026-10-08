@@ -126,6 +126,7 @@ export const api = {
     if (params) Object.entries(params).forEach(([k, v]) => { if (v) p.set(k, v) })
     return jfetch<any>(`/api/analytics/salary?${p.toString()}`)
   },
+  skillGap: () => jfetch<any>('/api/analytics/skill-gap'),
 
   // search history
   searchHistory: () => jfetch<{ searches: any[] }>('/api/search-history'),
