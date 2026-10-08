@@ -1042,3 +1042,62 @@ CareerHub AI is a mature, feature-rich SPA with 22+ views, 55+ API routes, 7 AI 
 3. **Skill learning resources**: Link missing skills from skill-gap analysis to specific courses/resources
 4. **Job detail page collapsible sections**: Make description/responsibilities/requirements collapsible for better mobile UX
 5. **Dashboard "Quick actions" card**: One-click access to key actions (search, AI assistant, resume analyzer)
+
+---
+Task ID: 30
+Agent: main (cron round 11)
+Task: Recommendation reason badges, quick actions card, keyboard shortcuts help dialog
+
+## Current Project Status Assessment
+CareerHub AI is a mature, feature-rich SPA with 19 views, 47+ API routes, 7 AI endpoints, company reviews, interview prep, career roadmap, skill gap analysis, salary insights, job/company comparison, onboarding wizard, personalized recommendations, search history, trending jobs, browse-by-industry, email preview, recently-viewed-jobs, AI generation history. The platform is stable, lint-clean, and pushed to GitHub. This round added recommendation reason badges, a quick actions card, and a keyboard shortcuts help dialog.
+
+## Completed Modifications
+
+### 1. Recommendation Reason Badges on Dashboard
+- **File**: `src/components/views/dashboard.tsx`
+- Added `recReasons` state that stores which profile attributes were used to personalize recommendations
+- Reasons tracked: branch, degree, fresher status, preferred location, remote preference
+- Added "Matched by" badge row above the recommended jobs showing each reason as a primary-colored pill with Sparkles icon
+- The subtitle now shows "Matched to CSE · Bangalore · Hybrid" instead of just branch + location
+- Only shows when there are reasons AND results are loaded
+
+### 2. Quick Actions Card on Dashboard
+- **File**: `src/components/views/dashboard.tsx` (new `QuickActionsCard` component)
+- Card with 6 one-click action shortcuts in a 3×2 (mobile) / 6×1 (desktop) grid:
+  - Search jobs (primary icon)
+  - AI Assistant (violet)
+  - Resume tools (emerald)
+  - Interview prep (amber)
+  - Career roadmap (rose)
+  - Skill gap (blue)
+- Each action button has a colored icon background, hover scale effect, and navigates to the respective view
+- Placed between the Profile completion CTA and the main grid
+
+### 3. Keyboard Shortcuts Help Dialog
+- **New file**: `src/components/keyboard-shortcuts-help.tsx`
+- Press `?` (Shift+/) anywhere to toggle the help dialog
+- 3 sections: Global, Navigation, Tools
+- Global: ⌘K (command palette), ? (shortcuts), Esc (close)
+- Navigation: G+H (home), G+J (jobs), G+D (dashboard), G+P (profile), G+S (saved), G+A (applications)
+- Tools: G+I (interview prep), G+R (resume), G+M (roadmap), G+$ (salary), G+B (AI assistant), G+L (alerts)
+- Keyboard key badges rendered as styled `<kbd>` elements
+- Footer: "Press ? anytime to toggle this help" + demo badge
+- Auth-aware: skips when typing in input/textarea fields
+- Wired into app-shell globally
+
+## Verification Results
+- `bun run lint` → clean (0 errors, 0 warnings) ✅
+- **Keyboard shortcuts dialog**: opens on ? keypress, shows Global/Navigation/Tools sections ✅
+- **Landing page**: renders correctly ✅
+- **Git push**: committed (76f13bf) and pushed to GitHub successfully ✅
+
+## Unresolved Issues / Risks
+1. **G+keyboard navigation shortcuts**: The help dialog lists G+key shortcuts but these aren't fully implemented yet — only ⌘K and ? work. The G-key sequences would need a separate key handler in app-shell.
+2. **Server stability**: Dev server continues to be reaped between bash commands.
+
+## Priority Recommendations for Next Phase
+1. **Implement G+key navigation shortcuts**: Wire the G+H/J/D/P/S/A/I/R/M/$/B/L sequences to actual view navigation
+2. **Skill learning resources**: Link missing skills from skill-gap analysis to specific courses/resources
+3. **Job detail collapsible sections**: Make description/responsibilities/requirements collapsible for mobile UX
+4. **Dashboard "Today's tip" card**: AI-powered daily career tip based on the candidate's profile
+5. **Notifications dropdown**: Show unread count badge on the notifications bell
