@@ -65,6 +65,18 @@ export function SearchView({ preset }: { preset: View }) {
     return () => clearTimeout(t)
   }, [filter, runSearch])
 
+  // Record search to history when results change and there's a keyword
+  useEffect(() => {
+    if (!searchResults || searchLoading) return
+    const q = filter.q?.trim()
+    if (!q) return
+    // Debounce recording — only record after results settle
+    const t = setTimeout(() => {
+      api.recordSearch(q, filter, searchResults.total).catch(() => {})
+    }, 1500)
+    return () => clearTimeout(t)
+  }, [searchResults, searchLoading])
+
   const meta = presetTitles[preset] || presetTitles.search
   const jobs = searchResults?.jobs ?? []
   const total = searchResults?.total ?? 0

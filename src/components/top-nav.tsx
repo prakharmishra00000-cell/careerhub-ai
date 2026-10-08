@@ -62,9 +62,10 @@ export function TopNav() {
                 <button
                   key={l.label}
                   onClick={() => go(l.view)}
-                  className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${active ? 'text-primary bg-accent' : 'text-muted-foreground'}`}
+                  className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground ${active ? 'text-primary bg-accent' : 'text-muted-foreground hover:text-foreground'}`}
                 >
                   {l.label}
+                  {active && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-primary" />}
                 </button>
               )
             })}

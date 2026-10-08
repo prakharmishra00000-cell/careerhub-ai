@@ -116,4 +116,10 @@ export const api = {
     if (params) Object.entries(params).forEach(([k, v]) => { if (v) p.set(k, v) })
     return jfetch<any>(`/api/analytics/salary?${p.toString()}`)
   },
+
+  // search history
+  searchHistory: () => jfetch<{ searches: any[] }>('/api/search-history'),
+  recordSearch: (query: string, filters?: any, resultsCount?: number) =>
+    jfetch<{ ok: boolean }>('/api/search-history', { method: 'POST', body: JSON.stringify({ query, filters, resultsCount }) }),
+  clearSearchHistory: () => jfetch<{ ok: boolean }>('/api/search-history', { method: 'DELETE' }),
 }

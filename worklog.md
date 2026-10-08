@@ -563,3 +563,82 @@ CareerHub AI is a stable, production-grade SPA with 18+ views, 40+ API routes, a
 3. **Job recommendations personalization**: Use the candidate's profile (degree, branch, skills, location) to actually filter the "Recommended for you" section instead of just fetching newest jobs
 4. **Search history**: Track and display recent searches on the dashboard or search page
 5. **Company reviews**: Add a company review submission + display system (currently companies only have verified badge)
+
+---
+Task ID: 23
+Agent: main (cron round 4)
+Task: Personalized recommendations, profile completion CTA, search history tracking, landing hero styling polish, nav micro-interactions
+
+## Current Project Status Assessment
+CareerHub AI is a mature, production-grade SPA with 18+ views, 40+ API routes, AI matching, job comparison, salary insights, onboarding wizard, and recruiter application management. The platform is stable and lint-clean. This round focused on making the dashboard truly personalized, adding search history tracking, and polishing the landing page visual design.
+
+## Completed Modifications
+
+### 1. Personalized Job Recommendations
+- **File**: `src/components/views/dashboard.tsx`
+- Previously: "Recommended for you" just fetched newest jobs with `sort: 'best_match'`
+- Now: fetches the candidate's profile FIRST, then builds a personalized filter:
+  - `branch`: from profile.branch (e.g., CSE)
+  - `degree`: from profile.degree (e.g., BTech)
+  - `fresherFriendly`: true if the candidate is a fresher
+  - `location`: first preferred location from profile.preferredLocations
+  - `remoteType`: from profile.remotePreference
+- The subtitle dynamically shows "Matched to CSE · Bangalore" based on the candidate's profile
+- Falls back to "Based on fresh listings" if no profile data
+
+### 2. Profile Completion CTA Card
+- **File**: `src/components/views/dashboard.tsx`
+- Shows a gradient-bordered CTA card when profile completion < 80%
+- Displays: completion percentage (large), progress bar (animated width), "Build my profile" button
+- Copy: "Profiles at 80%+ get 3× more relevant recommendations"
+- Hidden for users with ≥80% completion (like the demo candidate at 95%)
+
+### 3. Search History Tracking (full-stack)
+- **New Prisma model**: `SearchHistory` (id, userId, query, filters, resultsCount, createdAt) with indexes
+- **New API**: `POST /api/search-history` (record), `GET /api/search-history` (list last 10), `DELETE /api/search-history` (clear all)
+- **API client**: `api.searchHistory()`, `api.recordSearch(query, filters, count)`, `api.clearSearchHistory()`
+- **Search view**: records searches automatically (debounced 1.5s after results settle) when there's a keyword query
+- **Dashboard "Recent searches" section**: new `RecentSearches` component that:
+  - Fetches the user's last 10 searches
+  - Renders as clickable pills with search icon + query + result count
+  - Clicking re-runs the search with the saved filters
+  - "Clear" button to delete all history
+  - Auto-hides if no searches exist
+
+### 4. Landing Hero Animated Gradient Mesh
+- **File**: `src/components/views/landing.tsx`
+- Added 3 animated gradient blur blobs behind the hero:
+  - Primary (indigo) 400px blob, 4s pulse
+  - Violet 300px blob, 5s pulse, 1s delay
+  - Emerald 250px blob, 6s pulse, 2s delay
+- Reduced hero-grid opacity from 60% to 40% to let the gradient show through
+- Added `fade-in` animation with staggered delays to hero elements (badge, headline, subtitle, search bar, quick filters)
+- Quick filter pills now have `hover:scale-105 active:scale-95` micro-interaction
+
+### 5. Nav Link Micro-Interactions
+- **File**: `src/components/top-nav.tsx`
+- Active nav links now show an animated underline indicator (`absolute -bottom-0.5 h-0.5 w-6 rounded-full bg-primary`)
+- Changed `transition-colors` to `transition-all` for smoother hover states
+- Non-active links now have `hover:text-foreground` for better hover feedback
+
+## Verification Results
+- `bun run lint` → clean (0 errors, 0 warnings) ✅
+- **Search History API**: login ✓, record ✓ (created ID returned), list ✓ (1 search found), clear ✓ ✅
+- **Salary API**: 41 jobs, avg ₹856K ✅
+- **Landing page**: polished hero with search bar, filter pills, subtle gradient mesh background ✅
+- **Dashboard**: "Recommended for you" shows personalized subtitle "Matched to CSE · Bangalore" ✅
+- **Dashboard**: salary trends widget with mini charts visible ✅
+- **Dashboard**: stat cards show real numbers (not dashes) ✅
+
+## Unresolved Issues / Risks
+1. **Server stability**: The dev server continues to be reaped by the sandbox environment between bash commands. The code is correct and verified via individual tests, but continuous agent-browser testing is difficult.
+2. **Profile completion CTA**: Not visible for the demo candidate (95% completion). Would need a new candidate or manually lowering the completion to test.
+3. **Recent searches**: Only shows after the user performs a search with a keyword. The demo candidate has no search history yet until they search.
+4. **Animated gradient blobs**: Very subtle on white background (15%/10%/8% opacity) — intentional per spec's "no excessive gradients" rule, but may appear "flat" in screenshots.
+
+## Priority Recommendations for Next Phase
+1. **Company reviews system**: Add a review submission + display system (rating, pros, cons, title) for companies
+2. **Job alert email simulation**: Show a "preview" of what an alert email would look like
+3. **Interview prep feature**: Add an AI-powered interview question generator for specific job titles
+4. **Career roadmap**: AI-generated career path visualization based on the candidate's profile
+5. **Saved jobs folder management**: Allow creating custom folders and drag-to-organize

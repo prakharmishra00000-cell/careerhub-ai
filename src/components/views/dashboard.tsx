@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Bookmark, ClipboardList, Bell, Gauge, ArrowRight,
-  Clock, Sparkles, CheckCircle2, TrendingUp,
+  Clock, Sparkles, CheckCircle2, TrendingUp, Search,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { timeAgo } from '@/lib/jobs'
@@ -60,23 +60,38 @@ export function DashboardView() {
     let active = true
     const load = async () => {
       setLoading(true)
+      // Fetch profile first so we can personalize recommendations
+      const profileRes = await api.getProfile().catch(() => null)
+      const prof = profileRes as any
+      if (!active) return
+      if (prof) { setProfileCompletion(prof.completionPct); setProfile(prof) }
+
+      // Build personalized filter from profile
+      const recFilter: any = { sort: 'best_match', pageSize: 6 }
+      if (prof?.branch) recFilter.branch = [prof.branch]
+      if (prof?.degree) recFilter.degree = [prof.degree]
+      if (prof?.fresherFriendly !== undefined && prof?.experienceKind === 'fresher') recFilter.fresherFriendly = true
+      if (prof?.preferredLocations) {
+        const locs = prof.preferredLocations.split(',').map((s: string) => s.trim()).filter(Boolean)
+        if (locs.length) recFilter.location = locs[0]
+      }
+      if (prof?.remotePreference && prof.remotePreference !== 'any') recFilter.remoteType = [prof.remotePreference]
+
       const results = await Promise.allSettled([
-        api.jobs({ sort: 'best_match', pageSize: 6 }),
+        api.jobs(recFilter),
         api.jobs({ sort: 'newest', pageSize: 4 }),
         api.applications(),
         api.savedJobs(),
         api.alerts(),
-        api.getProfile(),
         api.notifications(),
       ])
       if (!active) return
-      const [rec, fresh, appsR, saved, alerts, profile, notifs] = results
+      const [rec, fresh, appsR, saved, alerts, notifs] = results
       if (rec.status === 'fulfilled') setRecommended(rec.value.jobs)
       if (fresh.status === 'fulfilled') setNewest(fresh.value.jobs)
       if (appsR.status === 'fulfilled') setApps(appsR.value)
       if (saved.status === 'fulfilled') setSavedCount(saved.value.length)
-      if (alerts.status === 'fulfilled') setAlertCount(alerts.value.filter((a) => !a.paused).length)
-      if (profile.status === 'fulfilled') { setProfileCompletion(profile.value.completionPct); setProfile(profile.value) }
+      if (alerts.status === 'fulfilled') setAlertCount(alerts.value.filter((a: any) => !a.paused).length)
       if (notifs.status === 'fulfilled') setNotifications(notifs.value)
       // surface a single soft toast only if everything failed
       const failed = results.filter((r) => r.status === 'rejected')
@@ -140,6 +155,37 @@ export function DashboardView() {
         />
       </div>
 
+      {/* Profile completion CTA */}
+      {!loading && profileCompletion != null && profileCompletion < 80 && (
+        <Card className="mb-6 p-0 overflow-hidden border-primary/20">
+          <div className="relative bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5">
+            <div className="flex items-start gap-4">
+              <div className="size-12 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0">
+                <Sparkles className="size-6 text-primary-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <div>
+                    <h3 className="font-semibold text-sm">Complete your profile to get better matches</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Profiles at 80%+ get 3× more relevant recommendations</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-2xl font-bold text-primary">{profileCompletion}%</div>
+                    <div className="text-[10px] text-muted-foreground">complete</div>
+                  </div>
+                </div>
+                <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-3 mt-2">
+                  <div className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-700" style={{ width: `${profileCompletion}%` }} />
+                </div>
+                <Button size="sm" className="h-8 text-xs gap-1.5" onClick={() => setView('profile')}>
+                  Build my profile <ArrowRight className="size-3" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Main grid */}
       <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Main col */}
@@ -153,7 +199,9 @@ export function DashboardView() {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold tracking-tight">Recommended for you</h2>
-                  <p className="text-xs text-muted-foreground">Based on your profile and fresh listings</p>
+                  <p className="text-xs text-muted-foreground">
+                    {profile?.branch ? <>Matched to <span className="font-medium text-foreground/80">{profile.branch}</span> · {profile?.preferredLocations?.split(',')[0]?.trim() ?? 'your area'}</> : 'Based on fresh listings'}
+                  </p>
                 </div>
               </div>
               <Button variant="ghost" size="sm" className="text-xs" onClick={() => goToSearch('best_match')}>
@@ -216,6 +264,9 @@ export function DashboardView() {
               </div>
             )}
           </section>
+
+          {/* Recent searches */}
+          <RecentSearches />
         </div>
 
         {/* Sidebar */}
@@ -443,5 +494,75 @@ function SalaryTrendsWidget({ branch }: { branch?: string | null }) {
         </div>
       )}
     </Card>
+  )
+}
+
+// ---------------- Recent searches ----------------
+function RecentSearches() {
+  const setView = useApp((s) => s.setView)
+  const setFilter = useApp((s) => s.setFilter)
+  const runSearch = useApp((s) => s.runSearch)
+  const [searches, setSearches] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      setLoading(true)
+      try {
+        const res = await api.searchHistory()
+        if (active) setSearches(res.searches || [])
+      } catch { /* ignore */ }
+      finally { if (active) setLoading(false) }
+    }
+    load()
+    return () => { active = false }
+  }, [])
+
+  const handleClick = (s: any) => {
+    let filters: any = { q: s.query, page: 1 }
+    try { if (s.filters) filters = { ...JSON.parse(s.filters), q: s.query, page: 1 } } catch {}
+    setFilter(filters, { replace: true })
+    setView('search')
+    runSearch()
+  }
+
+  const handleClear = async () => {
+    try { await api.clearSearchHistory(); setSearches([]) } catch {}
+  }
+
+  if (loading) return null
+  if (searches.length === 0) return null
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="size-7 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Clock className="size-4 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">Recent searches</h2>
+            <p className="text-xs text-muted-foreground">Quickly re-run a previous search</p>
+          </div>
+        </div>
+        <Button variant="ghost" size="sm" className="text-xs h-7 text-muted-foreground" onClick={handleClear}>
+          Clear
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {searches.slice(0, 8).map((s) => (
+          <button
+            key={s.id}
+            onClick={() => handleClick(s)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card hover:border-primary/40 hover:bg-accent transition-colors text-sm group"
+          >
+            <Search className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="font-medium">{s.query}</span>
+            {s.resultsCount > 0 && <span className="text-xs text-muted-foreground">{s.resultsCount}</span>}
+          </button>
+        ))}
+      </div>
+    </section>
   )
 }

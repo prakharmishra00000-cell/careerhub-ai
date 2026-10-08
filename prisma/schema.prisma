@@ -397,3 +397,15 @@ model AuditLog {
   @@index([actorId])
   @@index([createdAt])
 }
+
+model SearchHistory {
+  id        String   @id @default(cuid())
+  userId    String?
+  query     String   // the search keyword
+  filters   String?  // serialized filter state (JSON)
+  resultsCount Int   @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}

@@ -77,28 +77,34 @@ export function LandingView() {
     <div className="flex-1">
       {/* ===== HERO ===== */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 hero-grid opacity-60 pointer-events-none" />
+        {/* Animated gradient mesh background */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 size-[400px] rounded-full bg-primary/15 blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
+          <div className="absolute top-20 right-1/4 size-[300px] rounded-full bg-violet-500/10 blur-[80px] animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }} />
+          <div className="absolute bottom-0 left-1/3 size-[250px] rounded-full bg-emerald-500/8 blur-[70px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
+        </div>
+        <div className="absolute inset-0 hero-grid opacity-40 pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background pointer-events-none" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-16">
           <div className="text-center max-w-4xl mx-auto">
-            <Badge variant="outline" className="mb-5 bg-card/60 backdrop-blur px-3 py-1 text-xs gap-1.5">
+            <Badge variant="outline" className="mb-5 bg-card/60 backdrop-blur px-3 py-1 text-xs gap-1.5 fade-in">
               <span className="size-1.5 rounded-full bg-primary animate-pulse" /> AI-powered career discovery · 9 sources · 40+ degrees
             </Badge>
-            <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-balance leading-[1.05]">
+            <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-balance leading-[1.05] fade-in" style={{ animationDelay: '100ms' }}>
               Find your next <span className="gradient-text">opportunity</span>
             </h1>
-            <p className="mt-5 text-base sm:text-lg text-muted-foreground text-balance max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-5 text-base sm:text-lg text-muted-foreground text-balance max-w-2xl mx-auto leading-relaxed fade-in" style={{ animationDelay: '200ms' }}>
               Search jobs, internships, apprenticeships and more from multiple trusted sources — personalized to your education, skills, location and career goals.
             </p>
-            <div className="mt-8 max-w-3xl mx-auto">
+            <div className="mt-8 max-w-3xl mx-auto fade-in" style={{ animationDelay: '300ms' }}>
               <SearchBar />
             </div>
-            <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <div className="mt-5 flex flex-wrap justify-center gap-2 fade-in" style={{ animationDelay: '400ms' }}>
               {quickFilters.map((f) => (
                 <button
                   key={f.label}
                   onClick={() => goSearch(f.filter)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-card/70 backdrop-blur text-xs font-medium text-foreground/80 hover:border-primary/40 hover:bg-accent hover:text-foreground transition-all"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-card/70 backdrop-blur text-xs font-medium text-foreground/80 hover:border-primary/40 hover:bg-accent hover:text-foreground transition-all hover:scale-105 active:scale-95"
                 >
                   <f.icon className="size-3.5" /> {f.label}
                 </button>
