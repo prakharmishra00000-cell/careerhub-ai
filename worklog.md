@@ -857,3 +857,67 @@ CareerHub AI is a comprehensive SPA with 22+ views, 52+ API routes, 7 AI endpoin
 3. **Interview prep history**: Save generated prep guides for later review
 4. **Career roadmap history**: Save generated roadmaps for later reference
 5. **Skill learning resources**: Link missing skills to specific courses/resources
+
+---
+Task ID: 27
+Agent: main (cron round 8)
+Task: Job alert email preview, recently viewed jobs widget, styling polish
+
+## Current Project Status Assessment
+CareerHub AI is a feature-rich SPA with 22+ views, 52+ API routes, 7 AI endpoints, company reviews, interview prep, career roadmap, skill gap analysis, salary insights, job comparison, onboarding wizard, personalized recommendations, search history, trending jobs, and browse-by-industry. The platform is stable and lint-clean. This round added a job alert email preview feature and a recently-viewed-jobs widget on the dashboard.
+
+## Completed Modifications
+
+### 1. Job Alert Email Preview Feature
+- **File**: `src/components/views/alerts.tsx`
+- Added a Mail icon "Preview email" button to each alert row (in the actions section, before the pause/edit/delete buttons)
+- Created `EmailPreviewDialog` component that renders a realistic email preview:
+  - Email header bar with gradient (primary → primary/70), CareerHub AI logo, "Email preview" badge
+  - Subject line: "📋 {alert.name} — N new matches"
+  - From/To headers (alerts@careerhub.ai → you)
+  - Greeting + body text with match count
+  - Criteria summary chips (parsed from the alert's query JSON)
+  - Job preview list (fetches top 3 newest matching jobs via `api.jobs`): each job card shows title, company, location, salary, source badge; clicking opens the job detail
+  - "View all matches" CTA button (navigates to search with the alert's filters)
+  - Email footer with "Manage your alerts" and "Unsubscribe" links
+  - Loading skeleton, empty state
+- **Store changes**: Added `previewing` state to `AlertsView`, `onPreview` prop to `AlertRow`
+- **Verified**: alert cards show the mail icon button ✅
+
+### 2. Recently Viewed Jobs Widget on Dashboard
+- **Store changes**: `src/lib/store.ts`
+  - Added `recentlyViewed: string[]` to store state (max 8 items)
+  - Added `addRecentlyViewed(id)` action
+  - Modified `openJob(id)` to automatically prepend the job ID to recentlyViewed (deduped, capped at 8)
+- **Dashboard widget**: `RecentlyViewedJobs` component in `src/components/views/dashboard.tsx`
+  - Reads `recentlyViewed` from the store
+  - Fetches full job details for up to 4 recently viewed job IDs via `api.job(id)` in parallel
+  - Renders compact job rows: company initials avatar, job title (hover→primary), company + location, time-ago
+  - Clicking a row opens the job detail page
+  - Auto-hides if no recently viewed jobs
+  - Placed in the dashboard sidebar between SalaryTrendsWidget and Notifications
+  - Loading skeleton state
+
+### 3. Styling Polish
+- Email preview dialog uses realistic email styling (gradient header, subject line, body text, footer)
+- Alert row mail icon has hover state (`hover:bg-accent hover:text-foreground`)
+- Recently viewed widget uses compact card design with avatar initials
+
+## Verification Results
+- `bun run lint` → clean (0 errors, 0 warnings) ✅
+- **Alerts page**: shows mail/preview icon button on alert cards ✅
+- **Landing page**: renders correctly ✅
+- **Email preview**: dialog renders with email header, subject, job previews, footer (verified via VLM) ✅
+- **Recently viewed**: store tracks job views, dashboard widget ready (will show after candidate views jobs) ✅
+
+## Unresolved Issues / Risks
+1. **Server stability**: Dev server continues to be reaped between bash commands. Code verified via individual tests.
+2. **Recently viewed**: Only populates as the candidate browses jobs. The demo candidate's existing session may not have recently viewed jobs yet.
+3. **Email preview**: Uses `api.jobs` to fetch matching jobs — accurate to what the actual alert email would contain.
+
+## Priority Recommendations for Next Phase
+1. **Company comparison**: Compare companies side-by-side (like job comparison)
+2. **Interview prep history**: Save generated prep guides for later review
+3. **Career roadmap history**: Save generated roadmaps for later reference
+4. **Skill learning resources**: Link missing skills to specific courses/resources
+5. **Job recommendations reason badges**: Show "Why am I seeing this?" on recommended jobs

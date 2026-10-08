@@ -321,6 +321,9 @@ export function DashboardView() {
           {/* Salary trends widget */}
           <SalaryTrendsWidget branch={profile?.branch} />
 
+          {/* Recently viewed */}
+          <RecentlyViewedJobs />
+
           {/* Notifications */}
           <Card className="p-5">
             <div className="flex items-center justify-between mb-3">
@@ -564,5 +567,70 @@ function RecentSearches() {
         ))}
       </div>
     </section>
+  )
+}
+
+// ---------------- Recently Viewed Jobs ----------------
+function RecentlyViewedJobs() {
+  const openJob = useApp((s) => s.openJob)
+  const recentlyViewed = useApp((s) => s.recentlyViewed)
+  const [jobs, setJobs] = useState<JobCardData[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (recentlyViewed.length === 0) return
+    let active = true
+    const load = async () => {
+      setLoading(true)
+      try {
+        const results = await Promise.all(recentlyViewed.slice(0, 4).map((id) => api.job(id).catch(() => null)))
+        if (active) setJobs(results.filter(Boolean) as JobCardData[])
+      } catch {}
+      finally { if (active) setLoading(false) }
+    }
+    load()
+    return () => { active = false }
+  }, [recentlyViewed])
+
+  if (recentlyViewed.length === 0) return null
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Clock className="size-4 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm">Recently viewed</h3>
+            <p className="text-[11px] text-muted-foreground">Pick up where you left off</p>
+          </div>
+        </div>
+      </div>
+      {loading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 rounded-md" />)}
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {jobs.map((job) => (
+            <button
+              key={job.id}
+              onClick={() => openJob(job.id)}
+              className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-accent transition-colors text-left group"
+            >
+              <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <span className="text-[10px] font-semibold text-primary">{job.companyName.split(' ').slice(0, 2).map((w) => w[0]).join('')}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium truncate group-hover:text-primary transition-colors">{job.title}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{job.companyName} · {job.city ?? 'Remote'}</p>
+              </div>
+              <span className="text-[10px] text-muted-foreground shrink-0">{timeAgo(job.postedAt)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </Card>
   )
 }

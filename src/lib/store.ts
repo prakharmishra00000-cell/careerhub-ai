@@ -32,6 +32,8 @@ interface AppState {
   // job comparison
   compareIds: string[]
   compareOpen: boolean
+  // recently viewed jobs
+  recentlyViewed: string[]
   // theme is handled by next-themes
 
   // actions
@@ -57,6 +59,7 @@ interface AppState {
   clearCompare: () => void
   openCompare: () => void
   closeCompare: () => void
+  addRecentlyViewed: (id: string) => void
   addAssistantTurn: (t: AIAssistantTurn) => void
   clearAssistant: () => void
 }
@@ -81,9 +84,17 @@ export const useApp = create<AppState>((set, get) => ({
   assistantTurns: [],
   compareIds: [],
   compareOpen: false,
+  recentlyViewed: [],
 
   setView: (v) => { set({ view: v }); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) },
-  openJob: (id) => { set({ selectedJobId: id, view: 'job' }); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) },
+  openJob: (id) => {
+    set((s) => ({
+      selectedJobId: id,
+      view: 'job' as View,
+      recentlyViewed: [id, ...s.recentlyViewed.filter((x) => x !== id)].slice(0, 8),
+    }))
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+  },
   openCompany: (id) => { set({ selectedCompanyId: id, view: 'company' }); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) },
 
   setFilter: (f, opts) => {
@@ -184,4 +195,7 @@ export const useApp = create<AppState>((set, get) => ({
   clearCompare: () => set({ compareIds: [] }),
   openCompare: () => set({ compareOpen: true }),
   closeCompare: () => set({ compareOpen: false }),
+  addRecentlyViewed: (id) => set((s) => ({
+    recentlyViewed: [id, ...s.recentlyViewed.filter((x) => x !== id)].slice(0, 8),
+  })),
 }))

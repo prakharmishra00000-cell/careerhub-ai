@@ -23,10 +23,10 @@ import {
 } from '@/components/ui/alert-dialog'
 import {
   Bell, Plus, Pencil, Trash2, Pause, Play, Mail, BellRing, Clock, Sparkles,
-  Loader2, Info,
+  Loader2, Info, Compass, Briefcase, ArrowRight,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { timeAgo, employmentTypeLabel, remoteTypeLabel } from '@/lib/jobs'
+import { timeAgo, employmentTypeLabel, remoteTypeLabel, formatSalary, formatStipend } from '@/lib/jobs'
 import type { AlertItem } from '@/lib/types'
 
 const FREQUENCIES = [
@@ -93,6 +93,7 @@ export function AlertsView() {
   const [editing, setEditing] = useState<AlertItem | null>(null)
   const [deleting, setDeleting] = useState<AlertItem | null>(null)
   const [toggling, setToggling] = useState<string | null>(null)
+  const [previewing, setPreviewing] = useState<AlertItem | null>(null)
 
   useEffect(() => {
     let active = true
@@ -203,6 +204,7 @@ export function AlertsView() {
               onToggle={() => togglePause(a)}
               onEdit={() => { setEditing(a); setDialogOpen(true) }}
               onDelete={() => setDeleting(a)}
+              onPreview={() => setPreviewing(a)}
             />
           ))}
         </div>
@@ -238,19 +240,23 @@ export function AlertsView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Email preview dialog */}
+      {previewing && <EmailPreviewDialog alert={previewing} onClose={() => setPreviewing(null)} />}
     </div>
   )
 }
 
 /* ---------- Row ---------- */
 function AlertRow({
-  alert: a, toggling, onToggle, onEdit, onDelete,
+  alert: a, toggling, onToggle, onEdit, onDelete, onPreview,
 }: {
   alert: AlertItem
   toggling: boolean
   onToggle: () => void
   onEdit: () => void
   onDelete: () => void
+  onPreview: () => void
 }) {
   const query = useMemo(() => parseQuery(a.query), [a.query])
   const channels = useMemo(() => channelsToArray(a.channels), [a.channels])
@@ -308,6 +314,14 @@ function AlertRow({
 
         {/* Actions */}
         <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={onPreview}
+            className="size-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            title="Preview email"
+            aria-label="Preview email"
+          >
+            <Mail className="size-4" />
+          </button>
           <button
             onClick={onToggle}
             disabled={toggling}
@@ -476,5 +490,157 @@ function EmptyAlerts({ onCreate, onBrowse }: { onCreate: () => void; onBrowse: (
         <Button variant="outline" onClick={onBrowse}>Browse jobs first</Button>
       </div>
     </Card>
+  )
+}
+
+/* ---------- Email Preview Dialog ---------- */
+function EmailPreviewDialog({ alert, onClose }: { alert: AlertItem; onClose: () => void }) {
+  const setView = useApp((s) => s.setView)
+  const setFilter = useApp((s) => s.setFilter)
+  const runSearch = useApp((s) => s.runSearch)
+  const [previewJobs, setPreviewJobs] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      setLoading(true)
+      try {
+        const filter = parseQuery(alert.query)
+        const res = await api.jobs({ ...filter, pageSize: 3, sort: 'newest' } as any)
+        if (active) setPreviewJobs(res.jobs || [])
+      } catch {}
+      finally { if (active) setLoading(false) }
+    }
+    load()
+    return () => { active = false }
+  }, [alert])
+
+  const query = useMemo(() => parseQuery(alert.query), [alert.query])
+  const chips: string[] = []
+  for (const [key, value] of Object.entries(query)) {
+    if (value === null || value === undefined || value === '') continue
+    if (Array.isArray(value)) {
+      for (const v of value) {
+        if (v) chips.push(`${FIELD_LABELS[key] ?? key}: ${valueToLabel(key, v)}`)
+      }
+    } else if (typeof value === 'boolean') {
+      if (value) chips.push(FIELD_LABELS[key] ?? key)
+    } else {
+      chips.push(`${FIELD_LABELS[key] ?? key}: ${valueToLabel(key, value)}`)
+    }
+  }
+
+  const viewAllMatches = () => {
+    const filter = parseQuery(alert.query)
+    setFilter({ ...filter, page: 1 } as any, { replace: true })
+    setView('search')
+    runSearch()
+    onClose()
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent className="max-w-lg p-0 overflow-hidden">
+        {/* Email header bar */}
+        <div className="bg-gradient-to-r from-primary to-primary/70 px-5 py-3 text-white flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="size-7 rounded-lg bg-white/15 flex items-center justify-center">
+              <Compass className="size-4" />
+            </div>
+            <span className="font-semibold text-sm">CareerHub AI</span>
+          </div>
+          <Badge className="bg-white/15 text-white border-0 text-[10px]">Email preview</Badge>
+        </div>
+
+        <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto scroll-thin">
+          {/* Subject line */}
+          <div className="border-b border-border pb-3">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+              <span>From: alerts@careerhub.ai</span>
+              <span>·</span>
+              <span>To: you</span>
+            </div>
+            <p className="text-sm font-semibold">📋 {alert.name} — {previewJobs.length} new {previewJobs.length === 1 ? 'match' : 'matches'}</p>
+          </div>
+
+          {/* Greeting + body */}
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">Hi there,</p>
+            <p className="text-sm text-muted-foreground">
+              We found <span className="font-medium text-foreground">{previewJobs.length} new {previewJobs.length === 1 ? 'opportunity' : 'opportunities'}</span> matching your alert criteria. Here are the latest:
+            </p>
+          </div>
+
+          {/* Criteria summary */}
+          {chips.length > 0 && (
+            <div className="rounded-lg bg-muted/50 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Your criteria</p>
+              <div className="flex flex-wrap gap-1">
+                {chips.slice(0, 6).map((c, i) => (
+                  <span key={i} className="text-[11px] px-1.5 py-0.5 rounded bg-background border border-border">{c}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Job preview list */}
+          {loading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
+            </div>
+          ) : previewJobs.length === 0 ? (
+            <div className="text-center py-6 text-sm text-muted-foreground">
+              <Mail className="size-8 mx-auto mb-2 opacity-30" />
+              No matching jobs right now. You'll be notified when new matches appear.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {previewJobs.map((job) => (
+                <div key={job.id} className="rounded-lg border border-border p-3 hover:border-primary/30 transition-colors cursor-pointer" onClick={() => { useApp.getState().openJob(job.id); onClose() }}>
+                  <div className="flex items-start gap-2.5">
+                    <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Briefcase className="size-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium leading-tight">{job.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{job.companyName}</p>
+                      <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+                        {job.city && <span>{job.city}</span>}
+                        {job.remoteType && <span>· {job.remoteType.replace(/_/g, ' ')}</span>}
+                      </div>
+                      <p className="text-xs font-semibold text-primary mt-1">
+                        {job.isInternship
+                          ? formatStipend(job.stipendMin, job.stipendMax, job.internshipPaid)
+                          : formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency, job.salaryPeriod, job.salaryDisclosed)}
+                      </p>
+                    </div>
+                    {job.sourceName && <Badge variant="outline" className="text-[10px] shrink-0">{job.sourceName}</Badge>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* CTA */}
+          <div className="text-center pt-2">
+            <Button size="sm" onClick={viewAllMatches} className="gap-1.5">
+              View all matches <ArrowRight className="size-3.5" />
+            </Button>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-border pt-3 text-center">
+            <p className="text-[10px] text-muted-foreground">
+              You're receiving this because you created a {alert.frequency} alert on CareerHub AI.
+              <br />
+              <button onClick={() => { useApp.getState().setView('alerts') }} className="underline hover:text-foreground">Manage your alerts</button>
+              {' · '}
+              <button onClick={() => { useApp.getState().setView('settings') }} className="underline hover:text-foreground">Unsubscribe</button>
+            </p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
