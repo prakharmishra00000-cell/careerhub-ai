@@ -23,6 +23,12 @@ export function SearchBar({ onSearch, className = '', size = 'lg' }: Props) {
   const [activeField, setActiveField] = useState<'q' | 'loc' | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
+  // Sync state when filter changes
+  useEffect(() => {
+    setQ(filter.q ?? '')
+    setLoc(filter.location ?? '')
+  }, [filter.q, filter.location])
+
   // debounce suggestions
   useEffect(() => {
     const t = setTimeout(async () => {
