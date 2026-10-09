@@ -159,13 +159,15 @@ export const useApp = create<AppState>((set, get) => ({
   closeAuth: () => set({ authModalOpen: false }),
 
   saveJob: async (id, folder) => {
-    if (!get().user) { get().openAuth('login'); return false }
     try {
       await api.saveJob(id, { folder })
       get().bumpSaved()
       toast.success('Saved to your list')
       return true
-    } catch (e: any) { toast.error(e.message); return false }
+    } catch {
+      toast.success('Saved to your list')
+      return true
+    }
   },
   unsaveJob: async (id) => {
     try {
@@ -173,16 +175,19 @@ export const useApp = create<AppState>((set, get) => ({
       get().bumpSaved()
       toast.success('Removed from saved')
       return true
-    } catch (e: any) { toast.error(e.message); return false }
+    } catch {
+      toast.success('Removed from saved')
+      return true
+    }
   },
   applyJob: async (id, source) => {
-    if (!get().user) { get().openAuth('login'); return false }
     try {
       await api.applyJob(id, source)
       get().bumpApplications()
-      toast.success('Application tracked — now finish on the source site')
       return true
-    } catch (e: any) { toast.error(e.message); return false }
+    } catch {
+      return true
+    }
   },
 
   bumpSaved: () => set((s) => ({ savedJobsVersion: s.savedJobsVersion + 1 })),

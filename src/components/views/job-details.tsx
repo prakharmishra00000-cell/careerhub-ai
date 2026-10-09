@@ -82,15 +82,15 @@ export function JobDetailsView() {
 
   const deadline = daysUntil(job.applicationDeadline)
   const handleSave = async () => {
-    if (!user) { openAuth('login'); return }
     if (saved) { await unsaveJob(job.id); setSaved(false) }
     else { await saveJob(job.id); setSaved(true) }
   }
   const handleApply = async () => {
-    if (!user) { openAuth('login'); return }
-    await applyJob(job.id, job.sourceName ?? undefined)
     setApplied(true)
-    window.open(job.sourceUrl ?? '#', '_blank', 'noopener,noreferrer')
+    if (job.sourceUrl) {
+      window.open(job.sourceUrl, '_blank', 'noopener,noreferrer')
+    }
+    applyJob(job.id, job.sourceName ?? undefined).catch(() => {})
     api.clickJob(job.id).catch(() => {})
   }
 

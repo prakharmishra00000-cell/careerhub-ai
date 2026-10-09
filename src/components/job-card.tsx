@@ -26,7 +26,6 @@ export function JobCard({ job, variant = 'default', saved: savedProp, onOpen }: 
 
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!user) { openAuth('login'); return }
     setSaving(true)
     if (saved) { await unsaveJob(job.id); setSaved(false) }
     else { await saveJob(job.id); setSaved(true) }
@@ -40,9 +39,10 @@ export function JobCard({ job, variant = 'default', saved: savedProp, onOpen }: 
 
   const handleApply = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!user) { openAuth('login'); return }
-    await applyJob(job.id, job.sourceName ?? undefined)
-    window.open(job.sourceUrl ?? '#', '_blank', 'noopener,noreferrer')
+    if (job.sourceUrl) {
+      window.open(job.sourceUrl, '_blank', 'noopener,noreferrer')
+    }
+    applyJob(job.id, job.sourceName ?? undefined).catch(() => {})
   }
 
   const deadline = daysUntil(job.applicationDeadline)

@@ -272,14 +272,11 @@ export function LandingView() {
         <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/70 p-8 sm:p-12 text-center">
           <div className="absolute inset-0 hero-grid opacity-20 pointer-events-none" />
           <div className="relative">
-            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-primary-foreground text-balance">Start your search in 30 seconds</h2>
-            <p className="mt-3 text-primary-foreground/80 max-w-xl mx-auto text-balance">Create a free account, build your profile, and let the AI find your next opportunity.</p>
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-primary-foreground text-balance">Explore live career opportunities</h2>
+            <p className="mt-3 text-primary-foreground/80 max-w-xl mx-auto text-balance">Search and apply directly to verified openings across every engineering and business domain.</p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Button size="lg" variant="secondary" className="font-semibold" onClick={() => user ? setView('dashboard') : openAuth('register')}>
-                {user ? 'Go to dashboard' : 'Create free account'} <ArrowRight className="size-4 ml-1" />
-              </Button>
-              <Button size="lg" variant="outline" className="bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground" onClick={() => { setView('search'); runSearch() }}>
-                Browse jobs
+              <Button size="lg" variant="secondary" className="font-semibold" onClick={() => { setView('search'); runSearch() }}>
+                Browse all live jobs <ArrowRight className="size-4 ml-1" />
               </Button>
             </div>
           </div>

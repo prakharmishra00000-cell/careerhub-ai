@@ -8,10 +8,9 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { NotificationsBell } from '@/components/notifications-bell'
 import {
   Briefcase, GraduationCap, Globe, Sparkles, Building2, LayoutDashboard, Bookmark,
-  ClipboardList, Bell, FileText, Bot, Settings, LogOut, Menu, Sun, Moon, Search, User as UserIcon, ShieldCheck, Compass, TrendingUp, Brain, Map, Wrench,
+  ClipboardList, Bell, FileText, Bot, Settings, LogOut, Menu, Sun, Moon, User as UserIcon, ShieldCheck, Compass,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
@@ -23,20 +22,14 @@ const navLinks = [
   { label: 'Freshers', view: 'freshers' as const, icon: Sparkles },
   { label: 'Government', view: 'government-jobs' as const, icon: ShieldCheck },
   { label: 'Companies', view: 'companies' as const, icon: Building2 },
-  { label: 'Salary Insights', view: 'salary-insights' as const, icon: TrendingUp },
-  { label: 'Interview Prep', view: 'interview-prep' as const, icon: Brain },
-  { label: 'Career Roadmap', view: 'career-roadmap' as const, icon: Map },
-  { label: 'Skill Gap', view: 'skill-gap' as const, icon: Wrench },
 ]
 
 export function TopNav() {
-  const { user, view, setView, openAuth, logout } = useApp()
+  const { user, view, setView, logout } = useApp()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
   useEffect(() => {
-    // one-time mount flag for theme icon; legitimate setState-in-effect
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 
@@ -65,7 +58,7 @@ export function TopNav() {
                 <button
                   key={l.label}
                   onClick={() => go(l.view)}
-                  className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground ${active ? 'text-primary bg-accent' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground ${active ? 'text-primary bg-accent font-semibold' : 'text-muted-foreground hover:text-foreground'}`}
                 >
                   {l.label}
                   {active && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-primary" />}
@@ -85,17 +78,7 @@ export function TopNav() {
           </nav>
 
           {/* Right actions */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => { if (typeof window !== 'undefined') { const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true, bubbles: true }); window.dispatchEvent(e) } else { go('search') } }}
-              className="hidden md:inline-flex items-center gap-2 h-9 px-3 rounded-full border border-border bg-card text-sm text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors"
-              aria-label="Search jobs"
-            >
-              <Search className="size-4" />
-              <span className="hidden xl:inline">Search jobs…</span>
-              <kbd className="hidden xl:inline-flex h-5 px-1.5 items-center text-[10px] font-medium rounded border border-border bg-muted text-muted-foreground">⌘K</kbd>
-            </button>
-
+          <div className="flex items-center gap-2">
             {mounted && (
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -106,9 +89,7 @@ export function TopNav() {
               </button>
             )}
 
-            {user && <NotificationsBell />}
-
-            {user ? (
+            {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="inline-flex items-center gap-2 h-9 pl-1.5 pr-3 rounded-full border border-border bg-card hover:bg-accent transition-colors">
@@ -132,9 +113,7 @@ export function TopNav() {
                     <DropdownMenuItem onClick={() => go('profile')}><UserIcon className="size-4 mr-2" /> Profile</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => go('saved')}><Bookmark className="size-4 mr-2" /> Saved jobs</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => go('applications')}><ClipboardList className="size-4 mr-2" /> Applications</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => go('alerts')}><Bell className="size-4 mr-2" /> Job alerts</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => go('resume')}><FileText className="size-4 mr-2" /> Resume tools</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => go('career-ai')}><Bot className="size-4 mr-2" /> AI Career Assistant</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => go('settings')}><Settings className="size-4 mr-2" /> Settings</DropdownMenuItem>
                   </DropdownMenuGroup>
                   {(user.role === 'recruiter' || user.role === 'company_admin' || user.role === 'admin') && (
@@ -150,11 +129,6 @@ export function TopNav() {
                   <DropdownMenuItem onClick={() => logout()} className="text-destructive focus:text-destructive"><LogOut className="size-4 mr-2" /> Sign out</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
-              <div className="hidden sm:flex items-center gap-1.5">
-                <Button variant="ghost" size="sm" onClick={() => openAuth('login')} className="text-sm">Sign in</Button>
-                <Button size="sm" onClick={() => openAuth('register')} className="text-sm">Get started</Button>
-              </div>
             )}
 
             <button
@@ -176,12 +150,6 @@ export function TopNav() {
                   <l.icon className="size-4 text-muted-foreground" /> {l.label}
                 </button>
               ))}
-              {!user && (
-                <div className="flex gap-2 mt-2 px-1">
-                  <Button variant="outline" className="flex-1" onClick={() => { openAuth('login'); setMobileMenu(false) }}>Sign in</Button>
-                  <Button className="flex-1" onClick={() => { openAuth('register'); setMobileMenu(false) }}>Get started</Button>
-                </div>
-              )}
             </nav>
           </div>
         )}
