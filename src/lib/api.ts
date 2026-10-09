@@ -143,4 +143,9 @@ export const api = {
   recordSearch: (query: string, filters?: any, resultsCount?: number) =>
     jfetch<{ ok: boolean }>('/api/search-history', { method: 'POST', body: JSON.stringify({ query, filters, resultsCount }) }),
   clearSearchHistory: () => jfetch<{ ok: boolean }>('/api/search-history', { method: 'DELETE' }),
+
+  // source sync — fetch real jobs from public APIs
+  syncSources: (source?: string) =>
+    jfetch<any>('/api/sources/sync', { method: 'POST', body: JSON.stringify({ source: source || 'all' }) }),
+  syncStatus: () => jfetch<any>('/api/sources/sync'),
 }

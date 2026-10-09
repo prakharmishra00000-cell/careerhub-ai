@@ -24,7 +24,7 @@ import {
   Shield, Users, Briefcase, Server, Building2, Flag, BarChart3, Search,
   Activity, AlertTriangle, CheckCircle2, XCircle, Loader2, ChevronLeft,
   ChevronRight, RefreshCw, Pencil, Database, TrendingUp, Eye, Inbox, Globe,
-  Info,
+  Info, Zap,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { timeAgo, employmentTypeLabel } from '@/lib/jobs'
@@ -580,6 +580,8 @@ function SourcesTab() {
   const [sources, setSources] = useState<JobSourceHealth[]>([])
   const [editing, setEditing] = useState<JobSourceHealth | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
+  const [syncResult, setSyncResult] = useState<any>(null)
 
   const load = async () => {
     setLoading(true)
@@ -623,8 +625,59 @@ function SourcesTab() {
     }
   }
 
+  const syncRealJobs = async () => {
+    setSyncing(true)
+    setSyncResult(null)
+    try {
+      const result = await api.syncSources('all')
+      setSyncResult(result)
+      const totalIns = result.totalInserted || 0
+      if (totalIns > 0) {
+        toast.success(`Synced ${totalIns} real jobs from live APIs!`)
+      } else {
+        toast.info('Sync complete — all jobs were already in the database')
+      }
+      load() // refresh source list
+    } catch (e: any) {
+      toast.error(e.message || 'Sync failed')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
+      {/* Real job sync banner */}
+      <Card className="p-4 border-emerald-500/30 bg-emerald-500/5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="size-9 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
+              <Zap className="size-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold">Fetch Real Jobs</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Fetches live job listings from <strong>Remotive</strong> (remote jobs worldwide) and <strong>Arbeitnow</strong> (EU jobs).
+                No API keys required. Jobs are stored with <code className="text-[10px] bg-muted px-1 rounded">isDemo=false</code>.
+              </p>
+              {syncResult && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {syncResult.sources?.map((s: any) => (
+                    <Badge key={s.name} variant="outline" className={`text-[10px] ${s.error ? 'border-destructive/30 text-destructive' : 'border-emerald-500/30 text-emerald-700 dark:text-emerald-300'}`}>
+                      {s.name}: {s.error ? `error` : `${s.inserted} new, ${s.skipped} existing`}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <Button size="sm" onClick={syncRealJobs} disabled={syncing} className="bg-emerald-600 hover:bg-emerald-700 shrink-0">
+            {syncing ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <Zap className="size-3.5 mr-1.5" />}
+            {syncing ? 'Syncing...' : 'Sync Now'}
+          </Button>
+        </div>
+      </Card>
+
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">Monitor and tune every job source connector.</p>
         <Button variant="outline" size="sm" onClick={load} disabled={loading}>
