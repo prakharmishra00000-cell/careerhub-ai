@@ -19,7 +19,7 @@ const inMemoryStore: Record<string, any[]> = {
 function createInMemoryModel(modelName: string) {
   if (!inMemoryStore[modelName]) inMemoryStore[modelName] = []
 
-  return {
+  const modelImpl: Record<string, any> = {
     async count() {
       return inMemoryStore[modelName].length
     },
@@ -63,7 +63,23 @@ function createInMemoryModel(modelName: string) {
       inMemoryStore[modelName] = []
       return { count: 0 }
     },
+    async groupBy() {
+      return []
+    },
+    async aggregate() {
+      return { _count: { _all: 0 } }
+    },
   }
+
+  return new Proxy(modelImpl, {
+    get(target, methodProp) {
+      if (typeof methodProp === 'string') {
+        if (methodProp in target) return target[methodProp]
+        return async () => []
+      }
+      return undefined
+    },
+  })
 }
 
 let activeDb: any = null
@@ -80,6 +96,12 @@ if (isRemoteDB) {
 export const db: any = new Proxy(activeDb || {}, {
   get(target, prop) {
     if (typeof prop === 'string') {
+      if (prop === '$transaction') {
+        return async (fn: any) => (typeof fn === 'function' ? fn(db) : (Array.isArray(fn) ? Promise.all(fn) : fn))
+      }
+      if (prop === '$queryRaw' || prop === '$executeRaw') return async () => []
+      if (prop === '$connect' || prop === '$disconnect') return async () => {}
+
       if (isRemoteDB && target && prop in target) {
         const model = target[prop]
         if (typeof model === 'object' && model !== null) {

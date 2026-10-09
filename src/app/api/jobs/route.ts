@@ -56,7 +56,7 @@ function liveJobToCard(j: NormalizedLiveJob): JobCardData {
     ppoAvailable: false,
     backlogPolicy: 'allowed',
     cgpaRequirement: null,
-    postedAt: j.postedAt.toISOString(),
+    postedAt: j.postedAt.toISOString ? j.postedAt.toISOString() : new Date(j.postedAt).toISOString(),
     applicationDeadline: null,
     lastVerifiedAt: new Date().toISOString(),
     sourceName: j.sourceName,
@@ -98,55 +98,55 @@ export async function GET(req: NextRequest) {
       pageSize: parseNum(sp.get('pageSize')) ?? 20,
     }
 
+    const page = Math.max(1, filter.page ?? 1)
+    const pageSize = Math.min(50, Math.max(1, filter.pageSize ?? 20))
+
     let fetchedLiveJobs: NormalizedLiveJob[] = []
     try {
       fetchedLiveJobs = await getLiveJobs(filter)
     } catch {
-      // Continue without error
+      fetchedLiveJobs = []
     }
 
-    const page = Math.max(1, filter.page ?? 1)
-    const pageSize = Math.min(50, Math.max(1, filter.pageSize ?? 20))
-
-    const where = buildJobWhere(filter)
-    const orderBy = buildJobOrderBy(filter)
-
-    let rows: any[] = []
+    const isRemoteDB = process.env.DATABASE_URL?.startsWith('postgresql://') || process.env.DATABASE_URL?.startsWith('postgres://')
+    let jobs: JobCardData[] = []
     let total = 0
 
-    try {
-      const [countResult, findResult] = await Promise.all([
-        db.job.count({ where }),
-        db.job.findMany({
-          where,
-          orderBy,
-          skip: (page - 1) * pageSize,
-          take: pageSize,
-          include: { source: true, company: true },
-        }),
-      ])
-      total = countResult || 0
-      rows = findResult || []
-    } catch {
-      rows = []
-      total = 0
+    if (isRemoteDB) {
+      try {
+        const where = buildJobWhere(filter)
+        const orderBy = buildJobOrderBy(filter)
+        const [countResult, findResult] = await Promise.all([
+          db.job.count({ where }),
+          db.job.findMany({
+            where,
+            orderBy,
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            include: { source: true, company: true },
+          }),
+        ])
+        total = countResult || 0
+        const rows = findResult || []
+        jobs = rows.map((j: any) => jobToCard(j))
+      } catch {
+        jobs = []
+        total = 0
+      }
     }
 
-    let jobs: JobCardData[] = rows.map((j: any) => jobToCard(j))
-
-    // Fallback directly to in-memory live jobs if DB returned 0 rows
-    if (jobs.length === 0 && fetchedLiveJobs.length > 0) {
+    // Use live external jobs if DB returns 0 or if running without a DB
+    if (jobs.length === 0) {
       jobs = fetchedLiveJobs.map(liveJobToCard)
       total = jobs.length
     }
 
-    // Default sample facets if DB is offline
     const facets = {
       sources: { LinkedIn: 15, Indeed: 12, Jobicy: 8, Arbeitnow: 6, Remotive: 5 },
       employmentTypes: { full_time: 25, internship: 12, contract: 6 },
       remoteTypes: { remote: 22, hybrid: 14, onsite: 10 },
       degrees: { BTech: 28, BE: 15, MCA: 10, BSc: 8 },
-      branches: { CSE: 30, IT: 24, 'Data Science': 12, AI: 10 },
+      branches: { CSE: 30, IT: 24, 'Data Science': 12, AI: 10, Mechanical: 8, Civil: 6 },
       cities: { Bangalore: 18, Hyderabad: 14, Pune: 10, Mumbai: 8, Delhi: 6 },
       companyTypes: { product: 20, startup: 18, mnc: 12 },
     }
