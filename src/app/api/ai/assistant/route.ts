@@ -12,7 +12,7 @@ Available fields and allowed values:
 - remoteType: array of ['remote','hybrid','onsite','work_from_home']
 - employmentType: array of ['full_time','part_time','contract','temporary','freelance','internship','apprenticeship','trainee','graduate_program','management_trainee','work_study','volunteer','fellowship','research','coop']
 - degree: array of ['BTech','BE','MTech','ME','BCA','MCA','BBA','MBA','BCom','MCom','BSc','MSc','BA','MA','PhD','Diploma','ITI','Polytechnic']
-- branch: array of ['CSE','IT','AI','ML','Data Science','Cybersecurity','ECE','EEE','Mechanical','Civil','Electrical','Chemical','Production','Automobile','Aerospace','Biotech','Biomedical','Environmental','Instrumentation','Architecture','HR','Operations','Marketing','Statistics','English','Biotechnology']
+- branch: array of ['CSE','IT','AI','ML','Data Science','Cybersecurity','IoT','ECE','EEE','Mechanical','Civil','Electrical','Chemical','Production','Automobile','Aerospace','Robotics','Mechatronics','Metallurgy','Mining','Petroleum','Biotech','Biomedical','Environmental','Instrumentation','Architecture','Finance','Accounting','HR','Operations','Marketing','Business Analytics','Statistics','English','Biotechnology','Any Branch']
 - experience: 'fresher'|'0-1'|'1-2'|'2-3'|'3-5'|'5-10'|'10+'
 - fresherFriendly: boolean
 - isInternship: boolean
