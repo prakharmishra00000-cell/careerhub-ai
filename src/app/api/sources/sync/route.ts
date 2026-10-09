@@ -3,6 +3,9 @@ import { db } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 import { fetchRemotive, fetchArbeitnow, syncJobsToDatabase } from '@/lib/source-adapters'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+
 // POST /api/sources/sync — fetch real jobs from public APIs and persist to DB
 export async function POST(req: NextRequest) {
   try {

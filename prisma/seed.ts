@@ -132,17 +132,10 @@ async function main() {
     data: { companyId: techVedika.id, userId: recruiter.id, role: 'recruiter' },
   })
 
-  // ---------- JOB SOURCES ----------
+  // ---------- JOB SOURCES (only real, connected sources) ----------
   const sources = [
-    { name: 'LinkedIn', kind: 'api', baseUrl: 'https://linkedin.com', logoUrl: '🔗', description: 'Professional network job listings.', lastSyncAt: hoursAgo(1), lastSuccessAt: hoursAgo(1), jobsFetched: 18420, jobsUpdated: 312, errorRate: 0.01 },
-    { name: 'Indeed', kind: 'api', baseUrl: 'https://indeed.com', logoUrl: '🅒', description: 'Aggregated job board.', lastSyncAt: hoursAgo(2), lastSuccessAt: hoursAgo(2), jobsFetched: 12480, jobsUpdated: 198, errorRate: 0.02 },
-    { name: 'Naukri', kind: 'feed', baseUrl: 'https://naukri.com', logoUrl: '🅝', description: 'India-focused job portal.', lastSyncAt: hoursAgo(3), lastSuccessAt: hoursAgo(3), jobsFetched: 9821, jobsUpdated: 145, errorRate: 0.03 },
-    { name: 'Internshala', kind: 'api', baseUrl: 'https://internshala.com', logoUrl: '🎓', description: 'Internship & training platform.', lastSyncAt: hoursAgo(4), lastSuccessAt: hoursAgo(4), jobsFetched: 4210, jobsUpdated: 88, errorRate: 0.01 },
-    { name: 'Unstop', kind: 'feed', baseUrl: 'https://unstop.com', logoUrl: '🏆', description: 'Student opportunities, competitions, hackathons.', lastSyncAt: hoursAgo(6), lastSuccessAt: hoursAgo(6), jobsFetched: 1820, jobsUpdated: 42, errorRate: 0.04 },
-    { name: 'Wellfound', kind: 'api', baseUrl: 'https://wellfound.com', logoUrl: '🚀', description: 'Startup jobs (formerly AngelList).', lastSyncAt: hoursAgo(8), lastSuccessAt: hoursAgo(8), jobsFetched: 980, jobsUpdated: 22, errorRate: 0.02 },
-    { name: 'Company Website', kind: 'company_provided', baseUrl: '', logoUrl: '🌐', description: 'Direct from company career pages.', lastSyncAt: hoursAgo(10), lastSuccessAt: hoursAgo(10), jobsFetched: 640, jobsUpdated: 14, errorRate: 0.01 },
-    { name: 'Government Portal', kind: 'feed', baseUrl: 'https://govtjobs.gov.in', logoUrl: '🏛️', description: 'Government & PSU recruitment feeds.', lastSyncAt: hoursAgo(12), lastSuccessAt: hoursAgo(12), jobsFetched: 420, jobsUpdated: 9, errorRate: 0.05 },
-    { name: 'Glassdoor', kind: 'api', baseUrl: 'https://glassdoor.com', logoUrl: '🔍', description: 'Jobs + company reviews.', lastSyncAt: daysAgo(1), lastSuccessAt: daysAgo(1), jobsFetched: 3120, jobsUpdated: 56, errorRate: 0.03 },
+    { name: 'Remotive', kind: 'api', baseUrl: 'https://remotive.com', logoUrl: '🌍', description: 'Remote jobs worldwide — live API integration.', lastSyncAt: hoursAgo(1), lastSuccessAt: hoursAgo(1), jobsFetched: 17, jobsUpdated: 17, errorRate: 0.0, syncFrequency: 'hourly', parserVersion: '2.0.0' },
+    { name: 'Arbeitnow', kind: 'api', baseUrl: 'https://www.arbeitnow.com', logoUrl: '🇪🇺', description: 'EU job board — live API integration.', lastSyncAt: hoursAgo(1), lastSuccessAt: hoursAgo(1), jobsFetched: 100, jobsUpdated: 100, errorRate: 0.0, syncFrequency: 'hourly', parserVersion: '2.0.0' },
   ]
   const sourceMap: Record<string, string> = {}
   for (const s of sources) {

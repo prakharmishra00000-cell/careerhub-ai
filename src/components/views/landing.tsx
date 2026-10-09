@@ -21,7 +21,7 @@ import {
 import { formatSalary, formatStipend } from '@/lib/jobs'
 import type { JobCardData } from '@/lib/types'
 
-const sources = ['LinkedIn', 'Indeed', 'Naukri', 'Internshala', 'Unstop', 'Wellfound', 'Glassdoor', 'Company Websites', 'Government Portals']
+const sources = ['Remotive', 'Arbeitnow', 'Company Websites', 'Government Portals']
 
 const quickFilters = [
   { label: 'Jobs', icon: Briefcase, filter: { employmentType: ['full_time'] } },
@@ -44,7 +44,7 @@ const features = [
   { icon: ClipboardList, title: 'Application tracker', desc: 'Kanban-style pipeline: Saved → Applied → Assessment → Interview → Offer. Notes, deadlines, interview dates.' },
   { icon: Bell, title: 'Smart job alerts', desc: 'Create alerts from any search. Instant, daily, or weekly. Email or in-app. Pause anytime.' },
   { icon: Building2, title: 'Company directory', desc: 'Discover companies by industry, size, type. Verified badges. Open jobs count. Direct links to company sites.' },
-  { icon: ShieldCheck, title: 'Source attribution always', desc: 'Every job links back to its original source. "Apply on LinkedIn", "Apply on Internshala" — never claims a job is hosted here.' },
+  { icon: ShieldCheck, title: 'Source attribution always', desc: 'Every job links back to its original source. "Apply on Remotive", "Apply on Arbeitnow" — never claims a job is hosted here.' },
 ]
 
 const stats = [
@@ -61,8 +61,8 @@ const testimonials = [
 ]
 
 const faqs = [
-  { q: 'Is CareerHub AI a job board?', a: 'No — it is an aggregator and discovery engine. We index opportunities from multiple trusted sources (LinkedIn, Naukri, Internshala, government portals, company websites and more) into one unified, searchable interface. When you apply, you apply on the original source.' },
-  { q: 'Does CareerHub AI host the jobs?', a: 'No. Every listing preserves its original source, company, title and application URL. We show you where the job actually lives and route you to it with buttons like "Apply on LinkedIn" or "Apply on Company Website".' },
+  { q: 'Is CareerHub AI a job board?', a: 'No — it is an aggregator and discovery engine. We index opportunities from multiple trusted sources (Remotive, Arbeitnow, company websites, government portals and more) into one unified, searchable interface. When you apply, you apply on the original source.' },
+  { q: 'Does CareerHub AI host the jobs?', a: 'No. Every listing preserves its original source, company, title and application URL. We show you where the job actually lives and route you to it with buttons like "Apply on Remotive" or "Apply on Arbeitnow".' },
   { q: 'What does "Fresher friendly" mean?', a: 'It means the source listing explicitly indicates freshers are welcome. We never infer this from absence — if the listing does not mention it, we will not tag it.' },
   { q: 'Why do some jobs say "CGPA requirement not specified"?', a: 'Because we never convert missing info into a positive eligibility claim. "Explicitly no requirement" is different from "requirement not specified". This honesty is core to our matching engine.' },
   { q: 'Can I track applications across sources?', a: 'Yes. When you click "Apply", we record the application in your tracker AND open the source site. Your Kanban pipeline shows status across every source.' },
@@ -157,7 +157,7 @@ export function LandingView() {
           {[
             { step: '01', icon: Search, title: 'Search across sources', desc: 'One query, multiple job boards, company sites, government portals. Filters combine any way you want.' },
             { step: '02', icon: Bot, title: 'AI matches & explains', desc: 'Match scores show exactly why a job fits you — education, skills, experience, location, salary, career goals.' },
-            { step: '03', icon: ArrowRight, title: 'Apply on the source', desc: 'Click "Apply on LinkedIn" — you go to the original listing. We track your application in your pipeline.' },
+            { step: '03', icon: ArrowRight, title: 'Apply on the source', desc: 'Click "Apply on Remotive" — you go to the original listing. We track your application in your pipeline.' },
           ].map((s) => (
             <Card key={s.step} className="p-6 relative overflow-hidden card-hover border-border/70">
               <span className="absolute -top-2 -right-2 text-6xl font-bold text-muted/40 select-none">{s.step}</span>
