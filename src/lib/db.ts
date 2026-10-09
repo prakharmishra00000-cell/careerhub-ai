@@ -1,59 +1,112 @@
-import { PrismaClient } from '@prisma/client'
+const dbUrl = process.env.DATABASE_URL || ''
+const isRemoteDB = dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://')
 
-if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'file:./dev.db'
+const inMemoryStore: Record<string, any[]> = {
+  job: [],
+  user: [],
+  profile: [],
+  company: [],
+  savedJob: [],
+  application: [],
+  jobAlert: [],
+  notification: [],
+  jobReport: [],
+  companyReview: [],
+  searchHistory: [],
+  aiGeneration: [],
 }
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+function createInMemoryModel(modelName: string) {
+  if (!inMemoryStore[modelName]) inMemoryStore[modelName] = []
+
+  return {
+    async count() {
+      return inMemoryStore[modelName].length
+    },
+    async findMany(args?: any) {
+      let list = inMemoryStore[modelName]
+      if (args?.take && typeof args.take === 'number') {
+        list = list.slice(args?.skip || 0, (args?.skip || 0) + args.take)
+      }
+      return list
+    },
+    async findUnique(args?: any) {
+      const id = args?.where?.id || args?.where?.email || args?.where?.userId
+      if (!id) return inMemoryStore[modelName][0] || null
+      return inMemoryStore[modelName].find((item: any) => item.id === id || item.email === id || item.userId === id) || null
+    },
+    async findFirst(args?: any) {
+      if (args?.where) {
+        const key = Object.keys(args.where)[0]
+        const val = args.where[key]
+        return inMemoryStore[modelName].find((item: any) => item[key] === val) || null
+      }
+      return inMemoryStore[modelName][0] || null
+    },
+    async create(args: any) {
+      const item = { id: `mem-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, ...args?.data }
+      inMemoryStore[modelName].push(item)
+      return item
+    },
+    async upsert(args: any) {
+      const item = { id: `mem-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, ...(args?.create || args?.update || {}) }
+      inMemoryStore[modelName].push(item)
+      return item
+    },
+    async update(args: any) {
+      return { ...args?.data, id: args?.where?.id || '1' }
+    },
+    async delete(args: any) {
+      return { id: args?.where?.id || '1' }
+    },
+    async deleteMany() {
+      inMemoryStore[modelName] = []
+      return { count: 0 }
+    },
+  }
 }
 
-let prismaInstance: PrismaClient
+let activeDb: any = null
 
-try {
-  prismaInstance =
-    globalForPrisma.prisma ??
-    new PrismaClient({
-      log: ['error'],
-    })
-} catch {
-  prismaInstance = {} as any
+if (isRemoteDB) {
+  try {
+    const { PrismaClient } = require('@prisma/client')
+    activeDb = new PrismaClient({ log: ['error'] })
+  } catch {
+    activeDb = null
+  }
 }
 
-// Resilient proxy to catch any database errors when no database URL is provided
-export const db: any = new Proxy(prismaInstance, {
+export const db: any = new Proxy(activeDb || {}, {
   get(target, prop) {
-    if (typeof prop === 'string' && prop in target) {
-      const model = (target as any)[prop]
-      if (typeof model === 'object' && model !== null) {
-        return new Proxy(model, {
-          get(mTarget, mProp) {
-            const originalMethod = (mTarget as any)[mProp]
-            if (typeof originalMethod === 'function') {
-              return async (...args: any[]) => {
-                try {
-                  return await originalMethod.apply(mTarget, args)
-                } catch {
-                  // Graceful fallbacks when DATABASE_URL is not connected
-                  if (mProp === 'count') return 0
-                  if (mProp === 'findMany') return []
-                  if (mProp === 'findUnique' || mProp === 'findFirst') return null
-                  if (mProp === 'create' || mProp === 'upsert' || mProp === 'update') return args[0]?.data || null
-                  if (mProp === 'delete') return { id: args[0]?.where?.id || '1' }
-                  return null
+    if (typeof prop === 'string') {
+      if (isRemoteDB && target && prop in target) {
+        const model = target[prop]
+        if (typeof model === 'object' && model !== null) {
+          return new Proxy(model, {
+            get(mTarget, mProp) {
+              const method = mTarget[mProp]
+              if (typeof method === 'function') {
+                return async (...args: any[]) => {
+                  try {
+                    return await method.apply(mTarget, args)
+                  } catch {
+                    const memModel = createInMemoryModel(prop) as any
+                    if (typeof memModel[mProp] === 'function') {
+                      return await memModel[mProp](...args)
+                    }
+                    return null
+                  }
                 }
               }
-            }
-            return originalMethod
-          },
-        })
+              return method
+            },
+          })
+        }
+        return model
       }
-      return model
+      return createInMemoryModel(prop)
     }
     return undefined
   },
 })
-
-if (process.env.NODE_ENV !== 'production' && typeof prismaInstance === 'object') {
-  globalForPrisma.prisma = prismaInstance
-}
