@@ -185,7 +185,7 @@ async function fetchFromJSearch(filter: JobFilter): Promise<NormalizedLiveJob[]>
     }
 
     const host = process.env.JSEARCH_API_HOST || 'jsearch.p.rapidapi.com'
-    const res = await fetch(`https://${host}/search?${params.toString()}`, {
+    const res = await fetch(`https://${host}/search-v2?${params.toString()}`, {
       headers: {
         'x-rapidapi-key': apiKey,
         'x-rapidapi-host': host,
@@ -194,7 +194,7 @@ async function fetchFromJSearch(filter: JobFilter): Promise<NormalizedLiveJob[]>
 
     if (!res.ok) return []
     const data = await res.json()
-    const list = data?.data || []
+    const list: any[] = data?.data?.jobs || (Array.isArray(data?.data) ? data.data : [])
 
     return list.map((item: any) => {
       const isRemote = Boolean(item.job_is_remote)
@@ -224,9 +224,9 @@ async function fetchFromJSearch(filter: JobFilter): Promise<NormalizedLiveJob[]>
 
       return {
         title,
-        companyName: item.job_company_name || 'Hiring Company',
-        companyLogoUrl: item.job_company_logo || null,
-        city: item.job_city || null,
+        companyName: item.employer_name || item.job_company_name || 'Hiring Company',
+        companyLogoUrl: item.employer_logo || item.job_company_logo || null,
+        city: item.job_city || item.job_location || null,
         state: item.job_state || null,
         country: item.job_country || 'India',
         remoteType,
