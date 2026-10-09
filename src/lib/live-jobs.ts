@@ -35,6 +35,40 @@ export interface NormalizedLiveJob {
   isInternship: boolean
 }
 
+export function matchesTextQuery(title: string, description: string, tags: string[], query?: string): boolean {
+  if (!query || !query.trim()) return true
+  const q = query.toLowerCase().trim()
+  const t = title.toLowerCase()
+  const tagStr = tags.join(' ').toLowerCase()
+  const d = description.toLowerCase()
+
+  // Exact match
+  if (t.includes(q)) return true
+
+  // UI / UX / Product Design queries
+  if (/ui[\s/_-]?ux|ux[\s/_-]?ui|product design/i.test(q)) {
+    return (
+      /ui[\s/_-]?ux|ux[\s/_-]?ui|product designer|webdesigner|graphic designer|motion designer|lead designer|designer/i.test(t) ||
+      /ui[\s/_-]?ux|ux[\s/_-]?ui|product design|figma/i.test(tagStr)
+    )
+  }
+
+  // Developer / Engineering queries
+  if (/react|frontend|frontend developer/i.test(q)) {
+    return /react|frontend|front-end|web developer/i.test(t) || /react|frontend/i.test(tagStr)
+  }
+
+  if (/python|backend|python developer/i.test(q)) {
+    return /python|backend|back-end|django|fastapi/i.test(t) || /python|backend/i.test(tagStr)
+  }
+
+  // General token matching
+  const tokens = q.split(/\s+/).filter((word) => word.length > 2)
+  if (tokens.length === 0) return true
+
+  return tokens.some((tok) => t.includes(tok)) || tokens.some((tok) => tagStr.includes(tok)) || tokens.every((tok) => d.includes(tok))
+}
+
 // 1. Fetch from JSearch / RapidAPI (aggregates live LinkedIn, Indeed, Glassdoor, ZipRecruiter)
 async function fetchFromJSearch(filter: JobFilter): Promise<NormalizedLiveJob[]> {
   const apiKey = process.env.RAPIDAPI_KEY || process.env.JSEARCH_API_KEY
@@ -185,19 +219,19 @@ async function fetchFromAdzuna(filter: JobFilter): Promise<NormalizedLiveJob[]> 
 // 3. Fetch from Jobicy Public Live API (No Key Required)
 async function fetchFromJobicy(filter: JobFilter): Promise<NormalizedLiveJob[]> {
   try {
-    const res = await fetch('https://jobicy.com/api/v2/remote-jobs?count=20', {
+    const res = await fetch('https://jobicy.com/api/v2/remote-jobs?count=50', {
       next: { revalidate: 1800 },
     })
     if (!res.ok) return []
     const data = await res.json()
     const list = data?.jobs || []
 
-    const q = (filter.q || '').toLowerCase()
+    const q = filter.q || ''
     const loc = (filter.location || filter.city || '').toLowerCase()
 
     return list
       .filter((item: any) => {
-        if (q && !item.jobTitle?.toLowerCase().includes(q) && !item.jobDescription?.toLowerCase().includes(q) && !item.jobIndustry?.some((t: string) => t.toLowerCase().includes(q))) {
+        if (!matchesTextQuery(item.jobTitle || '', item.jobDescription || '', item.jobIndustry || [], q)) {
           return false
         }
         if (loc && !item.jobGeo?.toLowerCase().includes(loc)) {
@@ -223,7 +257,7 @@ async function fetchFromJobicy(filter: JobFilter): Promise<NormalizedLiveJob[]> 
         salaryPeriod: 'annual',
         salaryDisclosed: Boolean(item.annualSalaryMin || item.annualSalaryMax),
         description: item.jobDescription?.replace(/<\/?[^>]+(>|$)/g, '') || '',
-        skills: Array.isArray(item.jobIndustry) ? item.jobIndustry : ['Software', 'Tech'],
+        skills: Array.isArray(item.jobIndustry) ? item.jobIndustry : ['UI/UX', 'Design', 'Tech'],
         sourceName: 'Jobicy',
         sourceUrl: item.url || 'https://jobicy.com',
         sourceJobId: `jobicy-${item.id}`,
@@ -245,12 +279,12 @@ async function fetchFromArbeitnow(filter: JobFilter): Promise<NormalizedLiveJob[
     const data = await res.json()
     const list = data?.data || []
 
-    const q = (filter.q || '').toLowerCase()
+    const q = filter.q || ''
     const loc = (filter.location || filter.city || '').toLowerCase()
 
     return list
       .filter((item: any) => {
-        if (q && !item.title?.toLowerCase().includes(q) && !item.description?.toLowerCase().includes(q) && !item.tags?.some((t: string) => t.toLowerCase().includes(q))) {
+        if (!matchesTextQuery(item.title || '', item.description || '', item.tags || [], q)) {
           return false
         }
         if (loc && !item.location?.toLowerCase().includes(loc)) {
@@ -261,9 +295,9 @@ async function fetchFromArbeitnow(filter: JobFilter): Promise<NormalizedLiveJob[
         }
         return true
       })
-      .slice(0, 15)
+      .slice(0, 20)
       .map((item: any) => ({
-        title: item.title || 'Software Engineer',
+        title: item.title || 'Design & Engineering Specialist',
         companyName: item.company_name || 'Tech Company',
         companyLogoUrl: null,
         city: item.location || 'Remote',
@@ -280,7 +314,7 @@ async function fetchFromArbeitnow(filter: JobFilter): Promise<NormalizedLiveJob[
         salaryPeriod: 'annual',
         salaryDisclosed: false,
         description: item.description?.replace(/<\/?[^>]+(>|$)/g, '') || '',
-        skills: Array.isArray(item.tags) ? item.tags : [],
+        skills: Array.isArray(item.tags) ? item.tags : ['Design'],
         sourceName: 'Arbeitnow',
         sourceUrl: item.url || 'https://www.arbeitnow.com',
         sourceJobId: `arbeitnow-${item.slug || Math.random().toString(36).slice(2)}`,
@@ -295,39 +329,51 @@ async function fetchFromArbeitnow(filter: JobFilter): Promise<NormalizedLiveJob[
 // 5. Fetch from Remotive Public Live Remote Jobs API (No Key Required)
 async function fetchFromRemotive(filter: JobFilter): Promise<NormalizedLiveJob[]> {
   try {
-    const q = encodeURIComponent(filter.q || 'developer')
-    const res = await fetch(`https://remotive.com/api/remote-jobs?search=${q}&limit=15`, {
+    const rawQ = filter.q || ''
+    let queryParam = rawQ
+    if (/ui[\s/_-]?ux|designer|figma|product design/i.test(rawQ)) {
+      queryParam = 'design'
+    } else if (/developer|frontend|react|node/i.test(rawQ)) {
+      queryParam = 'developer'
+    }
+
+    const res = await fetch(`https://remotive.com/api/remote-jobs?search=${encodeURIComponent(queryParam)}&limit=30`, {
       next: { revalidate: 3600 },
     })
     if (!res.ok) return []
     const data = await res.json()
     const list = data?.jobs || []
 
-    return list.slice(0, 15).map((item: any) => ({
-      title: item.title || 'Remote Specialist',
-      companyName: item.company_name || 'Remote Org',
-      companyLogoUrl: item.company_logo || null,
-      city: item.candidate_required_location || 'Worldwide',
-      state: null,
-      country: 'Remote',
-      remoteType: 'remote',
-      employmentType: item.job_type === 'full_time' ? 'full_time' : 'contract',
-      experienceMin: null,
-      experienceMax: null,
-      fresherFriendly: false,
-      salaryMin: null,
-      salaryMax: null,
-      salaryCurrency: 'USD',
-      salaryPeriod: 'annual',
-      salaryDisclosed: Boolean(item.salary),
-      description: item.description?.replace(/<\/?[^>]+(>|$)/g, '') || '',
-      skills: Array.isArray(item.tags) ? item.tags : [],
-      sourceName: 'Remotive',
-      sourceUrl: item.url || 'https://remotive.com',
-      sourceJobId: `remotive-${item.id}`,
-      postedAt: item.publication_date ? new Date(item.publication_date) : new Date(),
-      isInternship: false,
-    }))
+    return list
+      .filter((item: any) => {
+        return matchesTextQuery(item.title || '', item.description || '', item.tags || [item.category || ''], rawQ)
+      })
+      .slice(0, 20)
+      .map((item: any) => ({
+        title: item.title || 'Remote Specialist',
+        companyName: item.company_name || 'Remote Org',
+        companyLogoUrl: item.company_logo || null,
+        city: item.candidate_required_location || 'Worldwide',
+        state: null,
+        country: 'Remote',
+        remoteType: 'remote',
+        employmentType: item.job_type === 'full_time' ? 'full_time' : 'contract',
+        experienceMin: null,
+        experienceMax: null,
+        fresherFriendly: false,
+        salaryMin: null,
+        salaryMax: null,
+        salaryCurrency: 'USD',
+        salaryPeriod: 'annual',
+        salaryDisclosed: Boolean(item.salary),
+        description: item.description?.replace(/<\/?[^>]+(>|$)/g, '') || '',
+        skills: Array.isArray(item.tags) ? item.tags : ['UI/UX', 'Product Design'],
+        sourceName: 'Remotive',
+        sourceUrl: item.url || 'https://remotive.com',
+        sourceJobId: `remotive-${item.id}`,
+        postedAt: item.publication_date ? new Date(item.publication_date) : new Date(),
+        isInternship: false,
+      }))
   } catch {
     return []
   }
