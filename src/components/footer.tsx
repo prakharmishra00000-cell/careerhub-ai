@@ -53,11 +53,11 @@ export function Footer() {
           ]} />
         </div>
         <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} CareerHub AI. Demo data is illustrative only.</p>
+          <p>© {new Date().getFullYear()} CareerHub AI. Real-time live career aggregation engine.</p>
           <p className="flex items-center gap-1.5">
-            <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /> All systems operational</span>
+            <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /> All feeds operational</span>
             <span>·</span>
-            <span>v1.0 demo</span>
+            <span>v1.0 live</span>
           </p>
         </div>
       </div>

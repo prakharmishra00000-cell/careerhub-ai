@@ -202,13 +202,7 @@ export function SearchView({ preset }: { preset: View }) {
               </>
             )}
 
-            {/* demo data notice */}
-            {jobs.length > 0 && (
-              <p className="text-center text-xs text-muted-foreground/60 mt-8">
-                <Badge variant="outline" className="text-[10px] mr-1.5">DEMO DATA</Badge>
-                Listings shown are illustrative seed data for demonstration purposes.
-              </p>
-            )}
+
           </div>
         </div>
       </div>

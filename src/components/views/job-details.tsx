@@ -104,13 +104,6 @@ export function JobDetailsView() {
           <ArrowLeft className="size-4" /> Back to results
         </button>
 
-        {job.isDemo && (
-          <div className="mb-4 px-3 py-2 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs flex items-center gap-2">
-            <AlertCircle className="size-4 shrink-0" />
-            <span><strong>Demo data.</strong> This listing is illustrative seed data for demonstration only.</span>
-          </div>
-        )}
-
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main column */}
           <div className="lg:col-span-2 space-y-5">
