@@ -1,4 +1,4 @@
-// CareerHub AI — Unified resilient AI provider supporting ZAI, OpenAI, Gemini, Groq, and heuristic fallback.
+// CareerHub AI — Unified resilient AI provider supporting ZAI, OpenAI, Gemini (with multi-key auto-rotation), Groq, and heuristic fallback.
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant'
@@ -73,14 +73,16 @@ export async function generateAICompletion(
     }
   }
 
-  // 3. Try Gemini API directly if GEMINI_API_KEY is present
-  const geminiKey =
-    process.env.GEMINI_API_KEY ||
-    process.env.GEMINI_API_KEY_1 ||
-    process.env.GEMINI_API_KEY_2 ||
-    process.env.GEMINI_API_KEY_3 ||
-    process.env.GOOGLE_API_KEY
-  if (geminiKey) {
+  // 3. Try Gemini API with automatic Key Rotation (Keys 1, 2, 3) to prevent quota exhaustion
+  const geminiKeys = [
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY_1,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3,
+    process.env.GOOGLE_API_KEY,
+  ].filter(Boolean) as string[]
+
+  for (const geminiKey of geminiKeys) {
     try {
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`
       const prompt = messages.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n')
@@ -103,7 +105,7 @@ export async function generateAICompletion(
         }
       }
     } catch {
-      // Continue to next fallback
+      // Rotate to next key on quota / network issue
     }
   }
 
