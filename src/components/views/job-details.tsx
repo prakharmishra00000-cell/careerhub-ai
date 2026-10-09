@@ -82,15 +82,15 @@ export function JobDetailsView() {
 
   const deadline = daysUntil(job.applicationDeadline)
   const handleSave = async () => {
-    if (!user) { openAuth('login'); return }
     if (saved) { await unsaveJob(job.id); setSaved(false) }
     else { await saveJob(job.id); setSaved(true) }
   }
   const handleApply = async () => {
-    if (!user) { openAuth('login'); return }
-    await applyJob(job.id, job.sourceName ?? undefined)
     setApplied(true)
-    window.open(job.sourceUrl ?? '#', '_blank', 'noopener,noreferrer')
+    if (job.sourceUrl) {
+      window.open(job.sourceUrl, '_blank', 'noopener,noreferrer')
+    }
+    applyJob(job.id, job.sourceName ?? undefined).catch(() => {})
     api.clickJob(job.id).catch(() => {})
   }
 
@@ -103,13 +103,6 @@ export function JobDetailsView() {
         <button onClick={() => history.length > 1 ? history.back() : setView('search')} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
           <ArrowLeft className="size-4" /> Back to results
         </button>
-
-        {job.isDemo && (
-          <div className="mb-4 px-3 py-2 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs flex items-center gap-2">
-            <AlertCircle className="size-4 shrink-0" />
-            <span><strong>Demo data.</strong> This listing is illustrative seed data for demonstration only.</span>
-          </div>
-        )}
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main column */}

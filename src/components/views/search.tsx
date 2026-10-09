@@ -53,8 +53,10 @@ export function SearchView({ preset }: { preset: View }) {
     lastPresetRef.current = preset
     const pf = presetFilters[preset] || {}
     skipDebounceRef.current = true
-    setFilter({ ...pf, page: 1 }, { replace: true })
-    // run after a tick so the filter is set
+    if (preset !== 'search') {
+      setFilter({ ...pf, page: 1 })
+    }
+    // run search after filter is set
     setTimeout(() => runSearch(), 0)
   }, [preset, setFilter, runSearch])
 
@@ -200,13 +202,7 @@ export function SearchView({ preset }: { preset: View }) {
               </>
             )}
 
-            {/* demo data notice */}
-            {jobs.length > 0 && (
-              <p className="text-center text-xs text-muted-foreground/60 mt-8">
-                <Badge variant="outline" className="text-[10px] mr-1.5">DEMO DATA</Badge>
-                Listings shown are illustrative seed data for demonstration purposes.
-              </p>
-            )}
+
           </div>
         </div>
       </div>

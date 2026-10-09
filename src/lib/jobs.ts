@@ -5,7 +5,14 @@ import type { Prisma } from '@prisma/client'
 import type { JobFilter, JobCardData } from './types'
 
 export const DEGREES = ['BTech', 'BE', 'MTech', 'ME', 'BCA', 'MCA', 'BBA', 'MBA', 'BCom', 'MCom', 'BSc', 'MSc', 'BA', 'MA', 'PhD', 'Diploma', 'ITI', 'Polytechnic'] as const
-export const BRANCHES = ['CSE', 'IT', 'AI', 'ML', 'Data Science', 'Cybersecurity', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Electrical', 'Chemical', 'Production', 'Automobile', 'Aerospace', 'Biotech', 'Biomedical', 'Environmental', 'Instrumentation', 'Architecture', 'HR', 'Operations', 'Marketing', 'Statistics', 'English', 'Biotechnology'] as const
+export const BRANCHES = [
+  'CSE', 'IT', 'AI', 'ML', 'Data Science', 'Cybersecurity', 'IoT', 'ECE', 'EEE',
+  'Mechanical', 'Civil', 'Electrical', 'Chemical', 'Production', 'Automobile', 'Aerospace',
+  'Robotics', 'Mechatronics', 'Metallurgy', 'Mining', 'Petroleum',
+  'Biotech', 'Biomedical', 'Environmental', 'Instrumentation', 'Architecture',
+  'Finance', 'Accounting', 'HR', 'Operations', 'Marketing', 'Business Analytics', 'Statistics',
+  'English', 'Biotechnology', 'Any Branch'
+] as const
 export const EMPLOYMENT_TYPES = ['full_time', 'part_time', 'contract', 'temporary', 'freelance', 'internship', 'apprenticeship', 'trainee', 'graduate_program', 'management_trainee', 'work_study', 'volunteer', 'fellowship', 'research', 'coop'] as const
 export const REMOTE_TYPES = ['remote', 'hybrid', 'onsite', 'work_from_home'] as const
 export const COMPANY_TYPES = ['startup', 'mnc', 'government', 'psu', 'ngo', 'non_profit', 'consulting', 'product', 'service', 'agency', 'research', 'university'] as const
