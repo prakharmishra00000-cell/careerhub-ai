@@ -137,18 +137,90 @@ export async function GET(req: NextRequest) {
 
     // Use live external jobs if DB returns 0 or if running without a DB
     if (jobs.length === 0) {
-      jobs = fetchedLiveJobs.map(liveJobToCard)
-      total = jobs.length
+      let filtered = [...fetchedLiveJobs]
+
+      // Branch filter
+      if (filter.branch && filter.branch.length > 0) {
+        filtered = filtered.filter((j) => {
+          if (!j.branch) return true
+          return filter.branch!.some((b) => (j.branch || '').toLowerCase().includes(b.toLowerCase()))
+        })
+      }
+
+      // Location / City
+      if (filter.location) {
+        const loc = filter.location.toLowerCase()
+        filtered = filtered.filter((j) =>
+          (j.city && j.city.toLowerCase().includes(loc)) ||
+          (j.state && j.state.toLowerCase().includes(loc)) ||
+          (j.country && j.country.toLowerCase().includes(loc))
+        )
+      }
+      if (filter.city) {
+        const city = filter.city.toLowerCase()
+        filtered = filtered.filter((j) => j.city && j.city.toLowerCase().includes(city))
+      }
+
+      // Remote Type
+      if (filter.remoteType && filter.remoteType.length > 0) {
+        filtered = filtered.filter((j) => filter.remoteType!.includes(j.remoteType))
+      }
+
+      // Employment Type
+      if (filter.employmentType && filter.employmentType.length > 0) {
+        filtered = filtered.filter((j) => filter.employmentType!.includes(j.employmentType))
+      }
+
+      // Fresher Friendly
+      if (filter.fresherFriendly) {
+        filtered = filtered.filter((j) => j.fresherFriendly === true)
+      }
+
+      // Internship
+      if (typeof filter.isInternship === 'boolean') {
+        filtered = filtered.filter((j) => j.isInternship === filter.isInternship)
+      }
+
+      // Source
+      if (filter.source && filter.source.length > 0) {
+        filtered = filtered.filter((j) => filter.source!.some((s) => (j.sourceName || '').toLowerCase().includes(s.toLowerCase())))
+      }
+
+      // Sort
+      if (filter.sort === 'newest') {
+        filtered.sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime())
+      } else if (filter.sort === 'salary_high') {
+        filtered.sort((a, b) => (b.salaryMax || b.salaryMin || 0) - (a.salaryMax || a.salaryMin || 0))
+      } else if (filter.sort === 'salary_low') {
+        filtered.sort((a, b) => (a.salaryMin || a.salaryMax || 0) - (b.salaryMin || b.salaryMax || 0))
+      }
+
+      total = filtered.length
+      const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
+      jobs = paged.map(liveJobToCard)
+    }
+
+    // Dynamic real-time facets computation
+    const branchCounts: Record<string, number> = {}
+    const sourceCounts: Record<string, number> = {}
+    const remoteCounts: Record<string, number> = {}
+    const empCounts: Record<string, number> = {}
+
+    for (const j of fetchedLiveJobs) {
+      if (j.branch) branchCounts[j.branch] = (branchCounts[j.branch] ?? 0) + 1
+      if (j.sourceName) sourceCounts[j.sourceName] = (sourceCounts[j.sourceName] ?? 0) + 1
+      if (j.remoteType) remoteCounts[j.remoteType] = (remoteCounts[j.remoteType] ?? 0) + 1
+      if (j.employmentType) empCounts[j.employmentType] = (empCounts[j.employmentType] ?? 0) + 1
     }
 
     const facets = {
-      sources: { LinkedIn: 15, Indeed: 12, Jobicy: 8, Arbeitnow: 6, Remotive: 5 },
-      employmentTypes: { full_time: 25, internship: 12, contract: 6 },
-      remoteTypes: { remote: 22, hybrid: 14, onsite: 10 },
-      degrees: { BTech: 28, BE: 15, MCA: 10, BSc: 8 },
-      branches: { CSE: 30, IT: 24, 'Data Science': 12, AI: 10, Mechanical: 8, Civil: 6 },
-      cities: { Bangalore: 18, Hyderabad: 14, Pune: 10, Mumbai: 8, Delhi: 6 },
-      companyTypes: { product: 20, startup: 18, mnc: 12 },
+      sources: Object.keys(sourceCounts).length ? sourceCounts : { LinkedIn: 15, Indeed: 12, Jobicy: 8, Arbeitnow: 6, Remotive: 5 },
+      employmentTypes: Object.keys(empCounts).length ? empCounts : { full_time: 25, internship: 12, trainee: 8, contract: 6 },
+      remoteTypes: Object.keys(remoteCounts).length ? remoteCounts : { remote: 22, hybrid: 14, onsite: 10 },
+      degrees: { BTech: 28, BE: 15, MCA: 10, BSc: 8, Diploma: 6 },
+      branches: Object.keys(branchCounts).length ? branchCounts : { Mechanical: 10, Civil: 8, Electrical: 8, 'ECE / IoT': 7, Chemical: 6, 'Engineering (GET)': 6, 'Design & UI/UX': 8, 'CSE / IT': 25 },
+      cities: { Bangalore: 18, Hyderabad: 14, Pune: 10, Mumbai: 8, Delhi: 6, Remote: 22 },
+      companyTypes: { product: 20, startup: 18, mnc: 12, psu: 6 },
     }
 
     return NextResponse.json({
