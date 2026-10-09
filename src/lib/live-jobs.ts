@@ -1,5 +1,5 @@
 // CareerHub AI — Real-time Live Job Aggregation Engine
-// Connects to live job platforms: LinkedIn, Indeed, Glassdoor, ZipRecruiter (via JSearch/RapidAPI),
+// Connects to live job platforms: LinkedIn, Indeed, Glassdoor, ZipRecruiter, Shine, Apna (via JSearch/RapidAPI),
 // Adzuna, and free public live job feeds (Jobicy, Arbeitnow, Remotive).
 
 import { db } from '@/lib/db'
@@ -44,7 +44,7 @@ export function matchesTextQuery(title: string, description: string, tags: strin
   const d = description.toLowerCase()
   const allText = `${t} ${tagStr} ${d}`
 
-  // Direct substring in title or tags
+  // Direct substring match
   if (t.includes(q) || tagStr.includes(q)) return true
 
   // Graduate Engineer Trainee / GET / Trainee queries
@@ -65,7 +65,7 @@ export function matchesTextQuery(title: string, description: string, tags: strin
     )
   }
 
-  // Mechanical / Automobile / Production / Manufacturing
+  // Mechanical / Automobile / Production
   if (/mechanical|automobile|automotive|production\s+engineer|manufacturing\s+engineer|thermal|hvac|cad\s+engineer|solidworks/i.test(q)) {
     return (
       /mechanical|automobile|automotive|production|manufacturing|thermal|hvac|solidworks|autocad|catia|piping|mechatronics|aerospace/i.test(t) ||
@@ -91,7 +91,7 @@ export function matchesTextQuery(title: string, description: string, tags: strin
     )
   }
 
-  // Electronics / ECE / VLSI / Embedded / IoT / Hardware
+  // Electronics / ECE / VLSI / Embedded / IoT
   if (/electronic|\bece\b|vlsi|embedded|iot|pcb|microcontroller|fpga|firmware|semiconductor/i.test(q)) {
     return (
       /electronic|\bece\b|vlsi|embedded|iot|pcb|microcontroller|fpga|firmware|semiconductor|hardware\s+engineer|rtl/i.test(t) ||
@@ -107,7 +107,7 @@ export function matchesTextQuery(title: string, description: string, tags: strin
     )
   }
 
-  // Finance / Accounting / Auditing / Banking
+  // Finance / Accounting / Auditing
   if (/finance|financial|accountant|accounting|\bca\b|audit|tax|treasury|investment\s+banking/i.test(q)) {
     return (
       /finance|financial|accountant|accounting|\bca\b|audit|taxation|treasury|investment\s+banking|equity\s+research/i.test(t) ||
@@ -131,12 +131,11 @@ export function matchesTextQuery(title: string, description: string, tags: strin
     )
   }
 
-  // General strict token matching
+  // General token matching
   const stopWords = new Set(['in', 'and', 'or', 'for', 'with', 'at', 'to', 'the', 'a', 'an', 'of', 'on', 'by', 'job', 'jobs', 'role', 'roles'])
   const tokens = q.split(/\s+/).filter((w) => w.length > 2 && !stopWords.has(w))
   if (tokens.length === 0) return true
 
-  // Check how many tokens match
   const matches = tokens.filter((tok) => allText.includes(tok))
   return matches.length >= Math.ceil(tokens.length * 0.7)
 }
@@ -158,7 +157,7 @@ function inferBranch(title: string, desc: string): string {
   return 'CSE / IT'
 }
 
-// 1. Fetch from JSearch / RapidAPI (aggregates live LinkedIn, Indeed, Glassdoor, ZipRecruiter)
+// 1. Fetch from JSearch / RapidAPI (aggregates live LinkedIn, Indeed, Glassdoor, ZipRecruiter, Shine, Apna)
 async function fetchFromJSearch(filter: JobFilter): Promise<NormalizedLiveJob[]> {
   const apiKey = process.env.RAPIDAPI_KEY || process.env.JSEARCH_API_KEY || '96ce1f062amsh3f3fc82804b6aaap1a0ad3jsn76ffac545710'
   if (!apiKey) return []
@@ -171,7 +170,7 @@ async function fetchFromJSearch(filter: JobFilter): Promise<NormalizedLiveJob[]>
     const params = new URLSearchParams({
       query,
       page: String(filter.page || 1),
-      num_pages: '1',
+      num_pages: '2',
       date_posted: 'month',
     })
 
@@ -209,6 +208,8 @@ async function fetchFromJSearch(filter: JobFilter): Promise<NormalizedLiveJob[]>
       else if (publisher.includes('glassdoor')) source = 'Glassdoor'
       else if (publisher.includes('ziprecruiter')) source = 'ZipRecruiter'
       else if (publisher.includes('internshala')) source = 'Internshala'
+      else if (publisher.includes('shine')) source = 'Shine'
+      else if (publisher.includes('apna')) source = 'Apna'
       else if (item.job_publisher) source = item.job_publisher
 
       const skills: string[] = []
@@ -498,497 +499,6 @@ async function fetchFromRemotive(filter: JobFilter): Promise<NormalizedLiveJob[]
   }
 }
 
-// 6. Comprehensive Multi-Branch Verified Directory (Ensures 100% coverage for all branches)
-const VERIFIED_BRANCH_JOBS: NormalizedLiveJob[] = [
-  // Graduate Engineer Trainee (GET)
-  {
-    title: 'Graduate Engineer Trainee (GET) - Mechanical / Operations',
-    companyName: 'Larsen & Toubro (L&T)',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    country: 'India',
-    remoteType: 'onsite',
-    employmentType: 'trainee',
-    experienceMin: 0,
-    experienceMax: 1,
-    fresherFriendly: true,
-    salaryMin: 600000,
-    salaryMax: 750000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Comprehensive 1-year Graduate Engineer Trainee program covering project engineering, site operations, CAD simulation, and heavy industrial machinery management across national infrastructure projects.',
-    skills: ['AutoCAD', 'SolidWorks', 'Manufacturing Operations', 'Quality Control', 'Project Management'],
-    degree: 'BE / BTech',
-    branch: 'Mechanical',
-    sourceName: 'LinkedIn',
-    sourceUrl: 'https://www.linkedin.com/jobs/view/graduate-engineer-trainee-larsen-toubro',
-    sourceJobId: 'get-lt-mech-01',
-    postedAt: new Date(Date.now() - 2 * 86400000),
-    isInternship: false,
-  },
-  {
-    title: 'Graduate Engineer Trainee - Civil & Infrastructure',
-    companyName: 'Tata Projects Limited',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    country: 'India',
-    remoteType: 'onsite',
-    employmentType: 'trainee',
-    experienceMin: 0,
-    experienceMax: 1,
-    fresherFriendly: true,
-    salaryMin: 550000,
-    salaryMax: 700000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Tata Projects is hiring Graduate Engineer Trainees for civil infrastructure, high-rise buildings, and metro rail projects. Hands-on training on STAAD.Pro, structural estimation, and site execution.',
-    skills: ['STAAD.Pro', 'AutoCAD Civil 3D', 'Site Surveying', 'Structural Estimation', 'RCC Design'],
-    degree: 'BE / BTech',
-    branch: 'Civil',
-    sourceName: 'LinkedIn',
-    sourceUrl: 'https://www.linkedin.com/jobs/view/graduate-engineer-trainee-tata-projects',
-    sourceJobId: 'get-tata-civil-02',
-    postedAt: new Date(Date.now() - 1 * 86400000),
-    isInternship: false,
-  },
-  {
-    title: 'Graduate Engineer Trainee - Electrical & Automation',
-    companyName: 'Siemens India',
-    city: 'Pune',
-    state: 'Maharashtra',
-    country: 'India',
-    remoteType: 'onsite',
-    employmentType: 'trainee',
-    experienceMin: 0,
-    experienceMax: 1,
-    fresherFriendly: true,
-    salaryMin: 650000,
-    salaryMax: 800000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Work with Siemens Smart Infrastructure & Digital Industries on industrial power systems, substation automation, PLC/SCADA programming, and motor drive commissioning.',
-    skills: ['PLC Programming', 'SCADA', 'Power Systems', 'Switchgear', 'Electrical CAD'],
-    degree: 'BE / BTech',
-    branch: 'Electrical',
-    sourceName: 'Indeed',
-    sourceUrl: 'https://www.indeed.com/viewjob?jk=siemens-get-electrical',
-    sourceJobId: 'get-siemens-elec-03',
-    postedAt: new Date(Date.now() - 3 * 86400000),
-    isInternship: false,
-  },
-  {
-    title: 'Graduate Engineer Trainee - Electronics & Embedded Systems',
-    companyName: 'Bosch Global Software Technologies',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    country: 'India',
-    remoteType: 'hybrid',
-    employmentType: 'trainee',
-    experienceMin: 0,
-    experienceMax: 1,
-    fresherFriendly: true,
-    salaryMin: 700000,
-    salaryMax: 850000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Graduate Trainee program focusing on Embedded C, AUTOSAR, automotive microcontrollers (ARM Cortex), CAN/LIN protocols, and IoT hardware validation.',
-    skills: ['Embedded C', 'Microcontrollers', 'ARM Cortex', 'CAN Protocol', 'IoT'],
-    degree: 'BE / BTech',
-    branch: 'ECE / IoT',
-    sourceName: 'LinkedIn',
-    sourceUrl: 'https://www.linkedin.com/jobs/view/get-embedded-bosch',
-    sourceJobId: 'get-bosch-ece-04',
-    postedAt: new Date(Date.now() - 1 * 86400000),
-    isInternship: false,
-  },
-  {
-    title: 'Graduate Engineer Trainee - Chemical & Process',
-    companyName: 'Reliance Industries Limited (RIL)',
-    city: 'Jamnagar',
-    state: 'Gujarat',
-    country: 'India',
-    remoteType: 'onsite',
-    employmentType: 'trainee',
-    experienceMin: 0,
-    experienceMax: 1,
-    fresherFriendly: true,
-    salaryMin: 650000,
-    salaryMax: 800000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Process engineering trainee role at world-class refining & petrochemical complex. Involves mass & energy balance, distillation unit monitoring, and safety auditing.',
-    skills: ['Process Engineering', 'Aspen Plus', 'Distillation', 'P&ID Diagrams', 'Refinery Operations'],
-    degree: 'BE / BTech',
-    branch: 'Chemical',
-    sourceName: 'Indeed',
-    sourceUrl: 'https://www.indeed.com/viewjob?jk=ril-chemical-get',
-    sourceJobId: 'get-ril-chem-05',
-    postedAt: new Date(Date.now() - 4 * 86400000),
-    isInternship: false,
-  },
-
-  // UI/UX & Product Design
-  {
-    title: 'UI/UX Designer (Product & Web Systems)',
-    companyName: 'Skalar Digital',
-    city: 'Remote',
-    state: null,
-    country: 'India',
-    remoteType: 'remote',
-    employmentType: 'full_time',
-    experienceMin: 1,
-    experienceMax: 3,
-    fresherFriendly: false,
-    salaryMin: 800000,
-    salaryMax: 1200000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Design intuitive interfaces, interactive prototypes, and scalable Figma design systems for international SaaS and mobile applications.',
-    skills: ['Figma', 'UI/UX Design', 'Wireframing', 'Prototyping', 'Design Systems'],
-    degree: 'BDes / BTech / Any Degree',
-    branch: 'Design & UI/UX',
-    sourceName: 'LinkedIn',
-    sourceUrl: 'https://www.linkedin.com/jobs/view/ui-ux-designer-skalar',
-    sourceJobId: 'des-skalar-01',
-    postedAt: new Date(Date.now() - 1 * 86400000),
-    isInternship: false,
-  },
-  {
-    title: 'Product Designer - Interaction & Design Systems',
-    companyName: 'Lemon.io',
-    city: 'Remote',
-    state: null,
-    country: 'Global',
-    remoteType: 'remote',
-    employmentType: 'full_time',
-    experienceMin: 2,
-    experienceMax: 5,
-    fresherFriendly: false,
-    salaryMin: 1200000,
-    salaryMax: 1800000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Drive end-to-end product design from user research and journey mapping to high-fidelity micro-interactions and developer handoffs.',
-    skills: ['Figma', 'User Research', 'Product Design', 'Micro-interactions', 'Information Architecture'],
-    degree: 'Any Graduate',
-    branch: 'Design & UI/UX',
-    sourceName: 'LinkedIn',
-    sourceUrl: 'https://www.linkedin.com/jobs/view/product-designer-lemon',
-    sourceJobId: 'des-lemon-02',
-    postedAt: new Date(Date.now() - 2 * 86400000),
-    isInternship: false,
-  },
-
-  // Mechanical & Automotive & Aerospace
-  {
-    title: 'Mechanical Design Engineer - CAD & SolidWorks',
-    companyName: 'Hero MotoCorp',
-    city: 'Gurgaon',
-    state: 'Haryana',
-    country: 'India',
-    remoteType: 'onsite',
-    employmentType: 'full_time',
-    experienceMin: 1,
-    experienceMax: 4,
-    fresherFriendly: false,
-    salaryMin: 700000,
-    salaryMax: 1000000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Design motorcycle chassis, powertrain components, and aerodynamic body panels using SolidWorks, CATIA, and ANSYS FEA simulations.',
-    skills: ['SolidWorks', 'CATIA', 'ANSYS FEA', 'GD&T', 'Automotive Design'],
-    degree: 'BE / BTech',
-    branch: 'Mechanical',
-    sourceName: 'Indeed',
-    sourceUrl: 'https://www.indeed.com/viewjob?jk=hero-mech-engineer',
-    sourceJobId: 'mech-hero-01',
-    postedAt: new Date(Date.now() - 2 * 86400000),
-    isInternship: false,
-  },
-  {
-    title: 'Aerospace Structural Design Engineer',
-    companyName: 'Hindustan Aeronautics Limited (HAL)',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    country: 'India',
-    remoteType: 'onsite',
-    employmentType: 'full_time',
-    experienceMin: 1,
-    experienceMax: 4,
-    fresherFriendly: false,
-    salaryMin: 850000,
-    salaryMax: 1200000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Structural modeling and stress analysis of aircraft airframe components using NASTRAN/PATRAN and CATIA V5.',
-    skills: ['CATIA V5', 'NASTRAN', 'Aerospace Structures', 'Stress Analysis', 'Composite Materials'],
-    degree: 'BE / BTech Aerospace / Mechanical',
-    branch: 'Aerospace',
-    sourceName: 'Indeed',
-    sourceUrl: 'https://www.indeed.com/viewjob?jk=hal-aerospace-engineer',
-    sourceJobId: 'aero-hal-01',
-    postedAt: new Date(Date.now() - 3 * 86400000),
-    isInternship: false,
-  },
-
-  // Civil & Structural
-  {
-    title: 'Site Civil Engineer - High-Rise & Commercial Construction',
-    companyName: 'Shapoorji Pallonji Real Estate',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    country: 'India',
-    remoteType: 'onsite',
-    employmentType: 'full_time',
-    experienceMin: 1,
-    experienceMax: 4,
-    fresherFriendly: false,
-    salaryMin: 650000,
-    salaryMax: 900000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Responsible for on-site civil structural execution, quality checks, contractor coordination, bar bending schedules (BBS), and concrete testing.',
-    skills: ['Site Execution', 'RCC Structures', 'AutoCAD', 'BBS Preparation', 'Quality Assurance'],
-    degree: 'BE / BTech / Diploma Civil',
-    branch: 'Civil',
-    sourceName: 'Indeed',
-    sourceUrl: 'https://www.indeed.com/viewjob?jk=shapoorji-civil-site',
-    sourceJobId: 'civ-shapoorji-01',
-    postedAt: new Date(Date.now() - 3 * 86400000),
-    isInternship: false,
-  },
-
-  // Electrical & Automation
-  {
-    title: 'Electrical & Automation Engineer - PLC / SCADA',
-    companyName: 'ABB India Limited',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    country: 'India',
-    remoteType: 'onsite',
-    employmentType: 'full_time',
-    experienceMin: 1,
-    experienceMax: 3,
-    fresherFriendly: false,
-    salaryMin: 750000,
-    salaryMax: 1100000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Develop and commission industrial automation software for manufacturing plants. Involves Siemens & Allen-Bradley PLC logic and WinCC SCADA.',
-    skills: ['Siemens PLC', 'SCADA (WinCC)', 'Control Panels', 'VFD Drives', 'Industrial Networking'],
-    degree: 'BE / BTech',
-    branch: 'Electrical',
-    sourceName: 'LinkedIn',
-    sourceUrl: 'https://www.linkedin.com/jobs/view/abb-electrical-automation',
-    sourceJobId: 'elec-abb-01',
-    postedAt: new Date(Date.now() - 2 * 86400000),
-    isInternship: false,
-  },
-
-  // ECE / IoT / VLSI
-  {
-    title: 'Embedded Firmware & IoT Systems Engineer',
-    companyName: 'Qualcomm India',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    country: 'India',
-    remoteType: 'hybrid',
-    employmentType: 'full_time',
-    experienceMin: 1,
-    experienceMax: 3,
-    fresherFriendly: false,
-    salaryMin: 1100000,
-    salaryMax: 1600000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Design low-power IoT device drivers, wireless connectivity protocols (BLE, Wi-Fi, Zigbee), and bare-metal firmware on ARM architecture.',
-    skills: ['Embedded C/C++', 'RTOS (FreeRTOS)', 'BLE/Wi-Fi Protocols', 'Device Drivers', 'ARM Architecture'],
-    degree: 'BE / BTech',
-    branch: 'ECE / IoT',
-    sourceName: 'LinkedIn',
-    sourceUrl: 'https://www.linkedin.com/jobs/view/qualcomm-embedded-iot',
-    sourceJobId: 'ece-qualcomm-01',
-    postedAt: new Date(Date.now() - 1 * 86400000),
-    isInternship: false,
-  },
-  {
-    title: 'VLSI RTL Design & Verification Engineer',
-    companyName: 'Texas Instruments',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    country: 'India',
-    remoteType: 'hybrid',
-    employmentType: 'full_time',
-    experienceMin: 1,
-    experienceMax: 4,
-    fresherFriendly: false,
-    salaryMin: 1400000,
-    salaryMax: 2000000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'RTL coding in SystemVerilog/Verilog, UVM testbench creation, functional coverage, and logic synthesis for semiconductor SoCs.',
-    skills: ['SystemVerilog', 'UVM', 'Verilog', 'Logic Synthesis', 'STA'],
-    degree: 'BE / BTech / MTech ECE/VLSI',
-    branch: 'ECE / IoT',
-    sourceName: 'LinkedIn',
-    sourceUrl: 'https://www.linkedin.com/jobs/view/ti-vlsi-rtl-engineer',
-    sourceJobId: 'vlsi-ti-01',
-    postedAt: new Date(Date.now() - 2 * 86400000),
-    isInternship: false,
-  },
-
-  // Computer Science, AI & Web
-  {
-    title: 'Full Stack Software Engineer (React & Node.js)',
-    companyName: 'Razorpay',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    country: 'India',
-    remoteType: 'hybrid',
-    employmentType: 'full_time',
-    experienceMin: 1,
-    experienceMax: 3,
-    fresherFriendly: false,
-    salaryMin: 1200000,
-    salaryMax: 1800000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Build high-volume payment checkout experiences and distributed fintech APIs using React, TypeScript, Node.js, and Redis.',
-    skills: ['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'Redis'],
-    degree: 'BTech / MCA / BCA',
-    branch: 'CSE / IT',
-    sourceName: 'LinkedIn',
-    sourceUrl: 'https://www.linkedin.com/jobs/view/razorpay-fullstack-engineer',
-    sourceJobId: 'cse-razorpay-01',
-    postedAt: new Date(Date.now() - 1 * 86400000),
-    isInternship: false,
-  },
-  {
-    title: 'AI & Machine Learning Research Engineer',
-    companyName: 'Sarvam AI',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    country: 'India',
-    remoteType: 'hybrid',
-    employmentType: 'full_time',
-    experienceMin: 1,
-    experienceMax: 3,
-    fresherFriendly: false,
-    salaryMin: 1500000,
-    salaryMax: 2400000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Train Indic LLMs, fine-tune transformer models, and optimize speech-to-text inference with PyTorch, CUDA, and vLLM.',
-    skills: ['PyTorch', 'LLMs', 'Transformers', 'Python', 'CUDA Optimization'],
-    degree: 'BTech / MTech / PhD',
-    branch: 'AI & Data Science',
-    sourceName: 'LinkedIn',
-    sourceUrl: 'https://www.linkedin.com/jobs/view/sarvam-ai-ml-engineer',
-    sourceJobId: 'ai-sarvam-01',
-    postedAt: new Date(Date.now() - 1 * 86400000),
-    isInternship: false,
-  },
-
-  // Finance & Accounting
-  {
-    title: 'Financial Analyst - FP&A & Corporate Valuation',
-    companyName: 'Deloitte India',
-    city: 'Gurgaon',
-    state: 'Haryana',
-    country: 'India',
-    remoteType: 'hybrid',
-    employmentType: 'full_time',
-    experienceMin: 1,
-    experienceMax: 3,
-    fresherFriendly: false,
-    salaryMin: 800000,
-    salaryMax: 1200000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Perform financial modeling, budgeting, variance analysis, and cash flow forecasting for global enterprise clients.',
-    skills: ['Financial Modeling', 'Excel & VBA', 'FP&A', 'Power BI', 'Corporate Finance'],
-    degree: 'BCom / BBA / MBA / CA Inter',
-    branch: 'Finance',
-    sourceName: 'Indeed',
-    sourceUrl: 'https://www.indeed.com/viewjob?jk=deloitte-financial-analyst',
-    sourceJobId: 'fin-deloitte-01',
-    postedAt: new Date(Date.now() - 2 * 86400000),
-    isInternship: false,
-  },
-
-  // HR & Talent Acquisition
-  {
-    title: 'Talent Acquisition Specialist & HR Associate',
-    companyName: 'Flipkart',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    country: 'India',
-    remoteType: 'hybrid',
-    employmentType: 'full_time',
-    experienceMin: 1,
-    experienceMax: 3,
-    fresherFriendly: false,
-    salaryMin: 600000,
-    salaryMax: 900000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Manage full lifecycle tech recruitment, candidate pipelining, campus placement drives, and offer rollouts.',
-    skills: ['Technical Recruitment', 'LinkedIn Recruiter', 'Interview Coordination', 'HR Analytics'],
-    degree: 'MBA / Any Graduate',
-    branch: 'HR',
-    sourceName: 'LinkedIn',
-    sourceUrl: 'https://www.linkedin.com/jobs/view/flipkart-talent-acquisition',
-    sourceJobId: 'hr-flipkart-01',
-    postedAt: new Date(Date.now() - 2 * 86400000),
-    isInternship: false,
-  },
-
-  // Marketing & Growth
-  {
-    title: 'Digital Marketing & Growth Specialist',
-    companyName: 'GrowthX',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    country: 'India',
-    remoteType: 'remote',
-    employmentType: 'full_time',
-    experienceMin: 1,
-    experienceMax: 3,
-    fresherFriendly: false,
-    salaryMin: 700000,
-    salaryMax: 1000000,
-    salaryCurrency: 'INR',
-    salaryPeriod: 'annual',
-    salaryDisclosed: true,
-    description: 'Execute high-ROI performance marketing campaigns, search engine optimization (SEO), and conversion funnel optimization.',
-    skills: ['Google Ads', 'SEO', 'Meta Ads', 'Conversion Rate Optimization', 'Google Analytics'],
-    degree: 'Any Graduate',
-    branch: 'Marketing',
-    sourceName: 'LinkedIn',
-    sourceUrl: 'https://www.linkedin.com/jobs/view/growthx-digital-marketing',
-    sourceJobId: 'mkt-growthx-01',
-    postedAt: new Date(Date.now() - 1 * 86400000),
-    isInternship: false,
-  },
-]
-
 // Synchronize and persist live jobs into the database
 export async function syncLiveJobsToDatabase(liveJobs: NormalizedLiveJob[]) {
   if (liveJobs.length === 0) return
@@ -1078,7 +588,7 @@ export async function syncLiveJobsToDatabase(liveJobs: NormalizedLiveJob[]) {
   }
 }
 
-// Master function to fetch real-time live jobs
+// Master function to fetch 100% real-time live jobs
 export async function getLiveJobs(filter: JobFilter): Promise<NormalizedLiveJob[]> {
   const [jsearch, jobicy, arbeitnow, remotive, adzuna] = await Promise.all([
     fetchFromJSearch(filter),
@@ -1102,28 +612,6 @@ export async function getLiveJobs(filter: JobFilter): Promise<NormalizedLiveJob[
       if (!j.branch) return true
       return filter.branch!.some((b) => j.branch!.toLowerCase().includes(b.toLowerCase()))
     })
-  }
-
-  // If live external API returned few or 0 items for this specific domain/keyword query,
-  // supplement with verified branch matches
-  if (combined.length < 5) {
-    const verifiedMatches = VERIFIED_BRANCH_JOBS.filter((j) => {
-      const matchQ = q ? matchesTextQuery(j.title, j.description, j.skills, q) : true
-      const matchBranch = filter.branch && filter.branch.length > 0
-        ? filter.branch.some((b) => (j.branch || '').toLowerCase().includes(b.toLowerCase()))
-        : true
-      const matchRemote = filter.remoteType && filter.remoteType.length > 0
-        ? filter.remoteType.includes(j.remoteType)
-        : true
-      return matchQ && matchBranch && matchRemote
-    })
-
-    const existingIds = new Set(combined.map((j) => j.sourceJobId))
-    for (const v of verifiedMatches) {
-      if (!existingIds.has(v.sourceJobId)) {
-        combined.push(v)
-      }
-    }
   }
 
   // Persist live jobs to DB in background
