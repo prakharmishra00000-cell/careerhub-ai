@@ -74,7 +74,12 @@ export async function generateAICompletion(
   }
 
   // 3. Try Gemini API directly if GEMINI_API_KEY is present
-  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY
+  const geminiKey =
+    process.env.GEMINI_API_KEY ||
+    process.env.GEMINI_API_KEY_1 ||
+    process.env.GEMINI_API_KEY_2 ||
+    process.env.GEMINI_API_KEY_3 ||
+    process.env.GOOGLE_API_KEY
   if (geminiKey) {
     try {
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`
