@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { buildJobWhere, buildJobOrderBy, jobToCard } from '@/lib/jobs'
+import { getLiveJobs } from '@/lib/live-jobs'
 import type { JobFilter, JobCardData } from '@/lib/types'
 
 function parseRepeatable(sp: URLSearchParams, key: string): string[] {
@@ -53,6 +54,16 @@ export async function GET(req: NextRequest) {
       pageSize: parseNum(sp.get('pageSize')) ?? 20,
     }
 
+    const liveEnabled = process.env.ENABLE_LIVE_JOBS !== 'false'
+    // If live jobs enabled and user is searching or on first page, trigger live aggregation
+    if (liveEnabled && (filter.q || filter.location || filter.page === 1)) {
+      try {
+        await getLiveJobs(filter)
+      } catch {
+        // Continue to DB query if external API fails
+      }
+    }
+
     const page = Math.max(1, filter.page ?? 1)
     const pageSize = Math.min(50, Math.max(1, filter.pageSize ?? 20))
 
@@ -73,8 +84,6 @@ export async function GET(req: NextRequest) {
     const jobs: JobCardData[] = rows.map((j: any) => jobToCard(j))
 
     // --- Facets ---
-    // Compute counts based on the current where clause (excluding the specific facet for less biased counts would be ideal,
-    // but for simplicity we compute on the full current filter set's matching jobs, capped for efficiency).
     const facetRows = await db.job.findMany({
       where,
       select: {

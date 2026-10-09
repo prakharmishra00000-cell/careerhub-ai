@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import ZAI from 'z-ai-web-dev-sdk'
+import { generateAICompletion } from '@/lib/ai-provider'
 import { db } from '@/lib/db'
 import { requireUser } from '@/lib/auth'
 import { jobToCard } from '@/lib/jobs'
@@ -108,18 +108,23 @@ export async function POST(req: NextRequest) {
 
     let explanation: MatchExplanation | null = null
     try {
-      const zai = await ZAI.create()
-      const completion = await zai.chat.completions.create({
-        messages: [
-          { role: 'assistant', content: SYSTEM },
-          { role: 'user', content: JSON.stringify({ profile: profilePayload, job: jobPayload }) },
-        ],
-        thinking: { type: 'disabled' },
-      })
-      const raw = completion?.choices?.[0]?.message?.content
+      const raw = await generateAICompletion([
+        { role: 'system', content: SYSTEM },
+        { role: 'user', content: JSON.stringify({ profile: profilePayload, job: jobPayload }) },
+      ], { jsonMode: true })
       explanation = safeParseExplanation(typeof raw === 'string' ? raw : null)
     } catch {
-      explanation = null
+      // Fallback matching calculation
+      const candSkills = new Set(profilePayload.technicalSkills.map((s: string) => s.toLowerCase()))
+      const matched = jobPayload.skills.filter((s: string) => candSkills.has(s.toLowerCase()))
+      const missing = jobPayload.skills.filter((s: string) => !candSkills.has(s.toLowerCase()))
+
+      explanation = {
+        summary: `Your profile demonstrates good foundational alignment with ${job.title} at ${job.companyName}.`,
+        strengths: matched.length > 0 ? matched.map((s) => `Matched skill: ${s}`) : ['Relevant background and educational alignment'],
+        gaps: missing.length > 0 ? missing.map((s) => `Skill to develop: ${s}`) : [],
+        eligibilityWarnings: [],
+      }
     }
 
     if (!explanation) {

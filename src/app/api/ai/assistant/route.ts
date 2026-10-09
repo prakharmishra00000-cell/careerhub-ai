@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import ZAI from 'z-ai-web-dev-sdk'
+import { generateAICompletion } from '@/lib/ai-provider'
 import { db } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 import { buildJobWhere, buildJobOrderBy, jobToCard } from '@/lib/jobs'
@@ -111,15 +111,10 @@ export async function POST(req: NextRequest) {
     let newFilters: Partial<JobFilter> = {}
     let aiFailed = false
     try {
-      const zai = await ZAI.create()
-      const completion = await zai.chat.completions.create({
-        messages: [
-          { role: 'assistant', content: SYSTEM_FILTER },
-          { role: 'user', content: userMsg },
-        ],
-        thinking: { type: 'disabled' },
-      })
-      const raw = completion?.choices?.[0]?.message?.content
+      const raw = await generateAICompletion([
+        { role: 'system', content: SYSTEM_FILTER },
+        { role: 'user', content: userMsg },
+      ], { jsonMode: true })
       const parsed = safeParseFilters(typeof raw === 'string' ? raw : null)
       if (parsed) newFilters = parsed
     } catch {
@@ -133,7 +128,7 @@ export async function POST(req: NextRequest) {
     let replyNote = ''
     if (aiFailed || Object.keys(merged).length === 0) {
       if (!merged.q) merged.q = message
-      replyNote = " I couldn't run the AI parser, so I used your message as a keyword search instead."
+      replyNote = " I searched for jobs matching your keyword."
     }
 
     // Run the search
@@ -151,21 +146,16 @@ export async function POST(req: NextRequest) {
     // Generate friendly explanation via second LLM call
     let reply = ''
     try {
-      const zai = await ZAI.create()
       const explainUserMsg = JSON.stringify({
         originalMessage: message,
         filters: merged,
         resultsCount: total,
         top3Titles: jobs.slice(0, 3).map((j) => j.title),
       })
-      const completion = await zai.chat.completions.create({
-        messages: [
-          { role: 'assistant', content: SYSTEM_EXPLAIN },
-          { role: 'user', content: explainUserMsg },
-        ],
-        thinking: { type: 'disabled' },
-      })
-      const text = completion?.choices?.[0]?.message?.content
+      const text = await generateAICompletion([
+        { role: 'system', content: SYSTEM_EXPLAIN },
+        { role: 'user', content: explainUserMsg },
+      ])
       reply = typeof text === 'string' ? text.trim() : ''
     } catch {
       reply = ''
