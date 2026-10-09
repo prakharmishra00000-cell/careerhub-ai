@@ -25,8 +25,9 @@ export interface FetchedJob {
 // https://remotive.com/api/remote-jobs
 // ============================================================
 export async function fetchRemotive(): Promise<FetchedJob[]> {
-  // Using no-store to bypass Next.js fetch cache (response >2MB)
-  const res = await fetch(new Request('https://remotive.com/api/remote-jobs?limit=100', { method: 'GET' }), { cache: 'no-store' as RequestCache })
+  // Dynamic URL to bypass Next.js fetch cache analysis
+  const url = 'https://remotive.com/api/' + 'remote-jobs?limit=100'
+  const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) throw new Error(`Remotive: ${res.status}`)
   const data = await res.json()
   const jobs: FetchedJob[] = (data.jobs || []).map((j: any) => ({
@@ -50,10 +51,13 @@ export async function fetchRemotive(): Promise<FetchedJob[]> {
 // https://www.arbeitnow.com/api/job-board-api
 // ============================================================
 export async function fetchArbeitnow(): Promise<FetchedJob[]> {
-  const res = await fetch(new Request('https://www.arbeitnow.com/api/job-board-api', { method: 'GET' }), { cache: 'no-store' as RequestCache })
+  // Dynamic URL to bypass Next.js fetch cache analysis (response >2MB)
+  const url = 'https://www.arbeitnow.com/api/' + 'job-board-api?page=1'
+  const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) throw new Error(`Arbeitnow: ${res.status}`)
   const data = await res.json()
-  const jobs: FetchedJob[] = (data.data || []).slice(0, 100).map((j: any) => ({
+  // Only take first 50 to keep response size manageable
+  const jobs: FetchedJob[] = (data.data || []).slice(0, 50).map((j: any) => ({
     title: j.title?.trim() || 'Untitled',
     companyName: j.company_name?.trim() || 'Unknown',
     description: (j.description || '').replace(/<[^>]*>/g, '').slice(0, 5000),

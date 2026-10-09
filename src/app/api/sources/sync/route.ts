@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getSession } from '@/lib/auth'
-import { fetchRemotive, fetchArbeitnow, syncJobsToDatabase } from '@/lib/source-adapters'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -13,6 +12,9 @@ export async function POST(req: NextRequest) {
     if (!session || session.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
+
+    // Dynamic import to prevent Next.js from analyzing fetch calls at build time
+    const { fetchRemotive, fetchArbeitnow, syncJobsToDatabase } = await import('@/lib/source-adapters')
 
     const body = await req.json().catch(() => ({}))
     const source = body.source || 'all' // 'all' | 'remotive' | 'arbeitnow'
