@@ -25,6 +25,7 @@ export function SearchBar({ onSearch, className = '', size = 'lg' }: Props) {
 
   // Sync state when filter changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setQ(filter.q ?? '')
     setLoc(filter.location ?? '')
   }, [filter.q, filter.location])

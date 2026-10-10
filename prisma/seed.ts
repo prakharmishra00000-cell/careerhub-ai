@@ -114,7 +114,7 @@ async function main() {
     { name: 'Indus University', industry: 'Education', companySize: '201-500', companyType: 'university', headquarters: 'Ahmedabad', verified: true, description: 'Multi-disciplinary private university.' },
   ]
 
-  const companyRecords = []
+  const companyRecords: any[] = []
   for (const c of companies) {
     const rec = await db.company.create({
       data: {

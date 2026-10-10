@@ -30,6 +30,7 @@ export function TopNav() {
   const [mounted, setMounted] = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 

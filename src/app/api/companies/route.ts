@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
 
     if (items.length === 0) {
       let filtered = fallbackCompanies
-      if (q) filtered = filtered.filter((c) => c.name.toLowerCase().includes(q) || c.industry.toLowerCase().includes(q))
+      if (q) filtered = filtered.filter((c) => c.name.toLowerCase().includes(q) || (c.industry || '').toLowerCase().includes(q))
       total = filtered.length
       items = filtered.slice((page - 1) * pageSize, page * pageSize)
     }

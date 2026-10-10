@@ -86,6 +86,7 @@ let activeDb: any = null
 
 if (isRemoteDB) {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { PrismaClient } = require('@prisma/client')
     activeDb = new PrismaClient({ log: ['error'] })
   } catch {

@@ -75,7 +75,7 @@ export function AppShell() {
   // update hash when view changes
   useEffect(() => {
     const s = useApp.getState()
-    let hash = s.view
+    let hash: string = s.view
     if (s.view === 'job' && s.selectedJobId) hash = `job/${s.selectedJobId}`
     else if (s.view === 'company' && s.selectedCompanyId) hash = `company/${s.selectedCompanyId}`
     if (typeof window !== 'undefined') {
@@ -153,7 +153,7 @@ export function AppShell() {
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">
           <h2 className="text-2xl font-semibold tracking-tight">Sign in required</h2>
           <p className="text-muted-foreground max-w-md">
-            {adminGated ? 'This area is restricted to platform administrators.' : gated ? 'Recruiter portal is for recruiter accounts.' : 'Please sign in to access this page.'}
+            {gated ? 'Recruiter portal is for recruiter accounts.' : 'Please sign in to access this page.'}
           </p>
           <div className="flex gap-2">
             <AuthModal />
