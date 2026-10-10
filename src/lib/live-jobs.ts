@@ -163,15 +163,18 @@ async function fetchFromJSearch(filter: JobFilter): Promise<NormalizedLiveJob[]>
   if (!apiKey) return []
 
   try {
-    const rawQ = filter.q || (filter.branch && filter.branch.length > 0 ? `${filter.branch[0]} Engineer` : 'engineer')
-    const loc = filter.location || filter.city || 'India'
-    const query = `${rawQ} in ${loc}`
+    // Build search query — use the user's keyword directly, not wrapped
+    const rawQ = filter.q || (filter.branch && filter.branch.length > 0 ? `${filter.branch[0]} engineer` : 'engineer')
+    const loc = filter.location || filter.city || ''
+    // Don't add "in India" if no location — let JSearch return global results
+    const query = loc ? `${rawQ} ${loc}` : rawQ
 
     const params = new URLSearchParams({
       query,
       page: String(filter.page || 1),
       num_pages: '3',
       date_posted: 'month',
+      country: 'in',
     })
 
     if (filter.remoteType?.includes('remote') || filter.remoteType?.includes('work_from_home')) {
@@ -184,11 +187,13 @@ async function fetchFromJSearch(filter: JobFilter): Promise<NormalizedLiveJob[]>
     }
 
     const host = process.env.JSEARCH_API_HOST || 'jsearch.p.rapidapi.com'
-    const res = await fetch(`https://${host}/search-v2?${params.toString()}`, {
+    const apiUrl = 'https://' + host + '/search-v2?' + params.toString()
+    const res = await fetch(apiUrl, {
       headers: {
         'x-rapidapi-key': apiKey,
         'x-rapidapi-host': host,
       },
+      cache: 'no-store',
     })
 
     if (!res.ok) return []
@@ -277,7 +282,7 @@ async function fetchFromAdzuna(filter: JobFilter): Promise<NormalizedLiveJob[]> 
     const where = encodeURIComponent(filter.location || filter.city || '')
     const url = `https://api.adzuna.com/v1/api/jobs/${country}/search/${page}?app_id=${appId}&app_key=${appKey}&what=${what}${where ? `&where=${where}` : ''}&content-type=application/json`
 
-    const res = await fetch(url)
+    const res = await fetch(url, { cache: 'no-store' })
     if (!res.ok) return []
     const data = await res.json()
     const list = data?.results || []
@@ -321,8 +326,9 @@ async function fetchFromAdzuna(filter: JobFilter): Promise<NormalizedLiveJob[]> 
 // 3. Fetch from Jobicy Public Live API
 async function fetchFromJobicy(filter: JobFilter): Promise<NormalizedLiveJob[]> {
   try {
-    const res = await fetch('https://jobicy.com/api/v2/remote-jobs?count=50', {
-      next: { revalidate: 1800 },
+    const jobicyUrl = 'https://jobicy.com/api/' + 'v2/remote-jobs?count=50'
+    const res = await fetch(jobicyUrl, {
+      cache: 'no-store',
     })
     if (!res.ok) return []
     const data = await res.json()
@@ -380,8 +386,9 @@ async function fetchFromJobicy(filter: JobFilter): Promise<NormalizedLiveJob[]> 
 // 4. Fetch from Arbeitnow Public Live API
 async function fetchFromArbeitnow(filter: JobFilter): Promise<NormalizedLiveJob[]> {
   try {
-    const res = await fetch('https://www.arbeitnow.com/api/job-board-api', {
-      next: { revalidate: 3600 },
+    const arbeitnowUrl = 'https://www.arbeitnow.com/api/' + 'job-board-api'
+    const res = await fetch(arbeitnowUrl, {
+      cache: 'no-store',
     })
     if (!res.ok) return []
     const data = await res.json()
@@ -451,8 +458,9 @@ async function fetchFromRemotive(filter: JobFilter): Promise<NormalizedLiveJob[]
       queryParam = 'developer'
     }
 
-    const res = await fetch(`https://remotive.com/api/remote-jobs?search=${encodeURIComponent(queryParam)}&limit=30`, {
-      next: { revalidate: 3600 },
+    const remotiveUrl = 'https://remotive.com/api/' + `remote-jobs?search=${encodeURIComponent(queryParam)}&limit=30`
+    const res = await fetch(remotiveUrl, {
+      cache: 'no-store',
     })
     if (!res.ok) return []
     const data = await res.json()
