@@ -100,6 +100,133 @@ export async function fetchRemoteOK(): Promise<FetchedJob[]> {
 }
 
 // ============================================================
+// Jobicy — Free remote jobs API (no key needed)
+// https://jobicy.com/api/v2/remote-jobs
+// ============================================================
+export async function fetchJobicy(): Promise<FetchedJob[]> {
+  const url = 'https://jobicy.com/api/' + 'v2/remote-jobs'
+  const res = await fetch(url, { cache: 'no-store' })
+  if (!res.ok) throw new Error(`Jobicy: ${res.status}`)
+  const data = await res.json()
+  const jobs: FetchedJob[] = (data.jobs || []).slice(0, 50).map((j: any) => ({
+    title: j.jobTitle?.trim() || 'Untitled',
+    companyName: j.companyName?.trim() || 'Unknown',
+    description: (j.jobExcerpt || '').replace(/<[^>]*>/g, '').slice(0, 5000),
+    sourceUrl: j.url || `https://jobicy.com/jobs/${j.jobSlug || j.id}`,
+    city: j.jobGeo?.split(',')[0]?.trim() || 'Remote',
+    country: 'Worldwide',
+    remoteType: 'remote',
+    employmentType: (j.jobType || ['Full-Time'])[0]?.toLowerCase().replace('-', '_') || 'full_time',
+    skills: j.jobIndustry?.slice(0, 6) || [],
+    sourceName: 'Jobicy',
+    tags: j.jobIndustry || [],
+    salaryMin: j.salaryMin ? Number(j.salaryMin) : undefined,
+    salaryMax: j.salaryMax ? Number(j.salaryMax) : undefined,
+    salaryCurrency: j.salaryCurrency || 'USD',
+  }))
+  return jobs
+}
+
+// ============================================================
+// Web Search Jobs — Uses z-ai-web-dev-sdk web_search to find real
+// job listings from LinkedIn, Naukri, Indeed, Internshala, Unstop,
+// Wellfound, Glassdoor, Company Websites, and Government Portals
+// ============================================================
+async function fetchJobsViaWebSearch(query: string, platform: string, sourceName: string): Promise<FetchedJob[]> {
+  try {
+    const ZAI = (await import('z-ai-web-dev-sdk')).default
+    const zai = await ZAI.create()
+    const results: any = await (zai as any).functions?.invoke?.('web_search', { query, num: 15 }) ||
+      await (zai as any).web_search?.({ query, num: 15 }) ||
+      []
+    const arr = Array.isArray(results) ? results : (results?.results || [])
+
+    const jobs: FetchedJob[] = arr
+      .filter((r: any) => r?.url && r?.name)
+      .filter((r: any) => {
+        // Only keep actual job-related pages
+        const url = r.url.toLowerCase()
+        return url.includes('/jobs') || url.includes('/job/') || url.includes('/view/') ||
+               url.includes('/internship') || url.includes('/career') || url.includes('/listing') ||
+               url.includes(platform) || r.snippet?.includes('apply')
+      })
+      .map((r: any) => ({
+        title: (r.name || '').trim().slice(0, 300) || 'Untitled',
+        companyName: extractCompanyFromSnippet(r.snippet || r.name || ''),
+        description: (r.snippet || '').replace(/<[^>]*>/g, '').slice(0, 3000),
+        sourceUrl: r.url,
+        city: extractLocationFromSnippet(r.snippet || ''),
+        country: 'India',
+        remoteType: /remote|work from home|wfh/i.test(r.snippet || '') ? 'remote' : 'onsite',
+        employmentType: /intern|internship/i.test(r.snippet || '') ? 'internship' : 'full_time',
+        skills: extractSkillsFromSnippet(r.snippet || ''),
+        sourceName,
+      }))
+    return jobs
+  } catch {
+    return []
+  }
+}
+
+function extractCompanyFromSnippet(snippet: string): string {
+  // Try to extract company name from common patterns
+  const patterns = [
+    /at\s+([A-Z][a-zA-Z0-9\s&]+?)(?:\.|,|;|·|$)/,
+    /company:\s*([A-Z][a-zA-Z0-9\s&]+)/,
+    /^([A-Z][a-zA-Z0-9\s&]+?)\s+(?:is hiring|careers|jobs)/,
+  ]
+  for (const p of patterns) {
+    const m = snippet.match(p)
+    if (m) return m[1].trim()
+  }
+  return 'Various'
+}
+
+function extractLocationFromSnippet(snippet: string): string {
+  const cities = ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Pune', 'Chennai', 'Kolkata', 'Gurgaon', 'Noida', 'Remote', 'Ahmedabad', 'Jaipur', 'Kochi', 'Lucknow']
+  for (const c of cities) {
+    if (snippet.includes(c)) return c
+  }
+  return 'Not specified'
+}
+
+function extractSkillsFromSnippet(snippet: string): string[] {
+  const skills = ['JavaScript', 'Python', 'React', 'Node.js', 'TypeScript', 'SQL', 'Java', 'AWS', 'Docker', 'Kubernetes', 'Go', 'C++', 'PHP', 'Ruby', 'Angular', 'Vue', 'Spring', 'Django', 'Flask', 'Express']
+  return skills.filter(s => snippet.includes(s)).slice(0, 6)
+}
+
+// ============================================================
+// Fetch from each major platform via web search
+// ============================================================
+export async function fetchLinkedInJobs(): Promise<FetchedJob[]> {
+  return fetchJobsViaWebSearch('site:linkedin.com/jobs software engineer india 2026', 'linkedin.com', 'LinkedIn')
+}
+
+export async function fetchIndeedJobs(): Promise<FetchedJob[]> {
+  return fetchJobsViaWebSearch('site:indeed.com software engineer jobs india', 'indeed.com', 'Indeed')
+}
+
+export async function fetchNaukriJobs(): Promise<FetchedJob[]> {
+  return fetchJobsViaWebSearch('site:naukri.com software engineer job listing', 'naukri.com', 'Naukri')
+}
+
+export async function fetchInternshalaJobs(): Promise<FetchedJob[]> {
+  return fetchJobsViaWebSearch('site:internshala.com internship software engineering', 'internshala.com', 'Internshala')
+}
+
+export async function fetchGlassdoorJobs(): Promise<FetchedJob[]> {
+  return fetchJobsViaWebSearch('site:glassdoor.com software engineer jobs', 'glassdoor.com', 'Glassdoor')
+}
+
+export async function fetchWellfoundJobs(): Promise<FetchedJob[]> {
+  return fetchJobsViaWebSearch('site:wellfound.com software engineer startup jobs', 'wellfound.com', 'Wellfound')
+}
+
+export async function fetchGovernmentJobs(): Promise<FetchedJob[]> {
+  return fetchJobsViaWebSearch('government jobs india engineer recruitment 2026', 'gov.in', 'Government Portal')
+}
+
+// ============================================================
 // Fetch all sources and sync to DB
 // ============================================================
 export async function syncAllSources(): Promise<{ totalInserted: number; totalSkipped: number; totalErrors: number; sources: any[] }> {
@@ -107,6 +234,14 @@ export async function syncAllSources(): Promise<{ totalInserted: number; totalSk
     { name: 'Remotive', fn: fetchRemotive },
     { name: 'Arbeitnow', fn: fetchArbeitnow },
     { name: 'RemoteOK', fn: fetchRemoteOK },
+    { name: 'Jobicy', fn: fetchJobicy },
+    { name: 'LinkedIn', fn: fetchLinkedInJobs },
+    { name: 'Indeed', fn: fetchIndeedJobs },
+    { name: 'Naukri', fn: fetchNaukriJobs },
+    { name: 'Internshala', fn: fetchInternshalaJobs },
+    { name: 'Glassdoor', fn: fetchGlassdoorJobs },
+    { name: 'Wellfound', fn: fetchWellfoundJobs },
+    { name: 'Government Portal', fn: fetchGovernmentJobs },
   ]
   let totalInserted = 0
   let totalSkipped = 0

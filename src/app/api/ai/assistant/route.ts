@@ -22,7 +22,7 @@ Available fields and allowed values:
 - stipendPaid: 'paid'|'unpaid'|'not_disclosed'
 - internshipDuration: number (months)
 - ppoAvailable: boolean
-- source: array of source names (Remotive, Arbeitnow, Company Website, Government Portal)
+- source: array of source names (LinkedIn, Indeed, Naukri, Internshala, Wellfound, Glassdoor, Remotive, Arbeitnow, RemoteOK, Jobicy, Company Website, Government Portal)
 - companyType: array of ['startup','mnc','government','psu','ngo','consulting','product','service','agency','research','university']
 - backlogPolicy: array of ['allowed','not_allowed','current_allowed','previous_allowed','not_specified']
 - minCgpa: number

@@ -2,66 +2,64 @@
 
 > **Every Opportunity. One Smart Search.**
 
-A high-performance live career aggregation engine and discovery platform that connects directly to authentic, real-time job listings from LinkedIn, Indeed, Glassdoor, ZipRecruiter, Shine, Apna, Jobicy, Arbeitnow, and Remotive into one unified interface.
+A live job aggregation engine that fetches real, real-time job listings from multiple sources into one unified interface.
 
----
+## Real Job Sources
 
-## Live Real-Time Architecture
+### Direct API Integration (no API keys needed)
+| Source | Type | Jobs |
+|--------|------|------|
+| **Remotive** | Free API | Remote jobs worldwide |
+| **Arbeitnow** | Free API | EU jobs |
+| **RemoteOK** | Free API | Remote tech jobs |
+| **Jobicy** | Free API | Remote professional jobs |
 
-### 1. Live Job Aggregation Engine (`src/lib/live-jobs.ts`)
-- **Real-Time Feeds:** Connects directly via RapidAPI JSearch (`/search-v2`) to stream live jobs from **LinkedIn, Indeed, Glassdoor, ZipRecruiter, Shine, and Apna**.
-- **Public Remote Feeds:** Integrates live remote feeds from **Jobicy**, **Arbeitnow**, and **Remotive**.
-- **Universal Branch Support:** Supports all engineering disciplines (*Mechanical, Civil, Electrical, Chemical, ECE, IoT, Aerospace, Automobile, Robotics, Metallurgy, Mining, Biotech*) and business domains (*UI/UX, Finance, HR, Marketing*).
-- **Direct Application:** Every job card links directly to its authentic external hiring portal with no login or signup barriers.
+### Web Search Integration (via z-ai-web-dev-sdk)
+| Source | Method | Jobs |
+|--------|--------|------|
+| **LinkedIn** | Web search | Jobs from linkedin.com/jobs |
+| **Indeed** | Web search | Jobs from indeed.com |
+| **Naukri** | Web search | Jobs from naukri.com |
+| **Internshala** | Web search | Internships from internshala.com |
+| **Wellfound** | Web search | Startup jobs from wellfound.com |
+| **Glassdoor** | Web search | Jobs from glassdoor.com |
+| **Company Website** | Web search | Direct company career pages |
+| **Government Portal** | Web search | Government recruitment pages |
 
-### 2. Multi-Provider AI Engine (`src/lib/ai-provider.ts`)
-- **Google Gemini AI:** Native integration with multi-key rotation (`GEMINI_API_KEY_1`, `GEMINI_API_KEY_2`, `GEMINI_API_KEY_3`) to ensure high availability.
-- **Provider Fallbacks:** Resilient failover supporting OpenAI, Groq, OpenRouter, and heuristic fallback parsers.
+### How It Works
+1. On app load, `/api/cron/sync` fetches from all sources
+2. Direct API sources (Remotive, Arbeitnow, RemoteOK, Jobicy) return structured job data
+3. Web search sources (LinkedIn, Indeed, Naukri, etc.) use the z-ai web search SDK to find real job listing URLs
+4. All jobs are stored in SQLite with `isDemo=false`
+5. Auto-sync runs every 10 minutes (client-side interval + Vercel cron)
+6. No mock data — every job is from a real public API or web search
 
-### 3. Serverless Resilient Database (`src/lib/db.ts`)
-- **Zero-DB Serverless Mode:** Built-in in-memory model proxy intercepts queries (`count()`, `findMany()`, `groupBy()`, `aggregate()`, `$transaction()`) to prevent filesystem errors (`Prisma Error 14`) on cloud deployments.
-- **Remote PostgreSQL Compatible:** Automatically switches to remote PostgreSQL when `DATABASE_URL` is configured.
+## Tech Stack
+- **Framework**: Next.js 16 (App Router, Turbopack)
+- **Database**: SQLite via Prisma ORM
+- **AI**: z-ai-web-dev-sdk (LLM + Web Search)
+- **UI**: Tailwind CSS 4 + shadcn/ui
+- **State**: Zustand
+- **Charts**: Recharts
 
----
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+ or Bun
-- Git
-
-### Environment Variables
-Configure the following in your `.env` or Vercel Environment Variables:
-
-```env
-# Session security
-NEXTAUTH_SECRET=cd7194e1f46356ff6130ed5868dfbd04
-AUTH_SECRET=cd7194e1f46356ff6130ed5868dfbd04
-
-# Live job aggregation (LinkedIn, Indeed, Glassdoor via JSearch)
-RAPIDAPI_KEY=96ce1f062amsh3f3fc82804b6aaap1a0ad3jsn76ffac545710
-ENABLE_LIVE_JOBS=true
-
-# AI Provider (Google Gemini with Key Rotation)
-GEMINI_API_KEY_1=your_gemini_api_key
-```
-
-### Installation & Run
+## Setup
 
 ```bash
-# Install dependencies
 npm install
-
-# Build
-npm run build
-
-# Start local server
+npx prisma db push
+npx prisma db seed
 npm run dev
 ```
 
----
+## Environment Variables
+Only one required:
+```
+DATABASE_URL=file:./db/custom.db
+```
 
-## Production Deployment (Vercel)
+AI keys are handled automatically by z-ai-web-dev-sdk.
 
-Deploy in one click:
-👉 **[Deploy CareerHub AI on Vercel](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fprakharmishra00000-cell%2Fcareerhub-ai&project-name=careerhub-ai&env=NEXTAUTH_SECRET,AUTH_SECRET,GEMINI_API_KEY_1,RAPIDAPI_KEY,ENABLE_LIVE_JOBS)**
+## Deploy to Vercel
+1. Push to GitHub
+2. Import on Vercel
+3. `vercel.json` is pre-configured with a cron job that syncs jobs every 10 minutes

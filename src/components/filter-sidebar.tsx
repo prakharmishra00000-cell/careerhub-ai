@@ -132,7 +132,7 @@ export function FilterSidebar({ facets, onMobileClose }: Props) {
 
       <FilterSection title="Source">
         <div className="space-y-2">
-          {['Remotive', 'Arbeitnow', 'Company Website', 'Government Portal'].map((s) => (
+          {['LinkedIn', 'Indeed', 'Naukri', 'Internshala', 'Wellfound', 'Glassdoor', 'Remotive', 'Arbeitnow', 'RemoteOK', 'Jobicy', 'Company Website', 'Government Portal'].map((s) => (
             <CheckRow key={s} checked={isOn('source', s)} onChange={() => toggleArray('source', s)} label={s} count={facets?.sources?.[s]} />
           ))}
         </div>

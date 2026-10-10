@@ -132,10 +132,20 @@ async function main() {
     data: { companyId: techVedika.id, userId: recruiter.id, role: 'recruiter' },
   })
 
-  // ---------- JOB SOURCES (only real, connected sources) ----------
+  // ---------- JOB SOURCES (all real platforms) ----------
   const sources = [
-    { name: 'Remotive', kind: 'api', baseUrl: 'https://remotive.com', logoUrl: '🌍', description: 'Remote jobs worldwide — live API integration.', lastSyncAt: hoursAgo(1), lastSuccessAt: hoursAgo(1), jobsFetched: 17, jobsUpdated: 17, errorRate: 0.0, syncFrequency: 'hourly', parserVersion: '2.0.0' },
-    { name: 'Arbeitnow', kind: 'api', baseUrl: 'https://www.arbeitnow.com', logoUrl: '🇪🇺', description: 'EU job board — live API integration.', lastSyncAt: hoursAgo(1), lastSuccessAt: hoursAgo(1), jobsFetched: 100, jobsUpdated: 100, errorRate: 0.0, syncFrequency: 'hourly', parserVersion: '2.0.0' },
+    { name: 'Remotive', kind: 'api', baseUrl: 'https://remotive.com', logoUrl: '🌍', description: 'Remote jobs worldwide — live API.', enabled: true, syncFrequency: 'hourly', parserVersion: '2.0.0' },
+    { name: 'Arbeitnow', kind: 'api', baseUrl: 'https://www.arbeitnow.com', logoUrl: '🇪🇺', description: 'EU jobs — live API.', enabled: true, syncFrequency: 'hourly', parserVersion: '2.0.0' },
+    { name: 'RemoteOK', kind: 'api', baseUrl: 'https://remoteok.com', logoUrl: '💻', description: 'Remote tech jobs — live API.', enabled: true, syncFrequency: 'hourly', parserVersion: '2.0.0' },
+    { name: 'Jobicy', kind: 'api', baseUrl: 'https://jobicy.com', logoUrl: '🔗', description: 'Remote professional jobs — live API.', enabled: true, syncFrequency: 'hourly', parserVersion: '2.0.0' },
+    { name: 'LinkedIn', kind: 'web_search', baseUrl: 'https://linkedin.com', logoUrl: '🔗', description: 'LinkedIn jobs via web search.', enabled: true, syncFrequency: 'hourly', parserVersion: '2.0.0' },
+    { name: 'Indeed', kind: 'web_search', baseUrl: 'https://indeed.com', logoUrl: '🔍', description: 'Indeed jobs via web search.', enabled: true, syncFrequency: 'hourly', parserVersion: '2.0.0' },
+    { name: 'Naukri', kind: 'web_search', baseUrl: 'https://naukri.com', logoUrl: '🅝', description: 'Naukri India jobs via web search.', enabled: true, syncFrequency: 'hourly', parserVersion: '2.0.0' },
+    { name: 'Internshala', kind: 'web_search', baseUrl: 'https://internshala.com', logoUrl: '🎓', description: 'Internships via web search.', enabled: true, syncFrequency: 'hourly', parserVersion: '2.0.0' },
+    { name: 'Wellfound', kind: 'web_search', baseUrl: 'https://wellfound.com', logoUrl: '🚀', description: 'Startup jobs via web search.', enabled: true, syncFrequency: 'hourly', parserVersion: '2.0.0' },
+    { name: 'Glassdoor', kind: 'web_search', baseUrl: 'https://glassdoor.com', logoUrl: '🔍', description: 'Glassdoor jobs via web search.', enabled: true, syncFrequency: 'hourly', parserVersion: '2.0.0' },
+    { name: 'Company Website', kind: 'web_search', baseUrl: '', logoUrl: '🌐', description: 'Company career pages via web search.', enabled: true, syncFrequency: 'daily', parserVersion: '2.0.0' },
+    { name: 'Government Portal', kind: 'web_search', baseUrl: '', logoUrl: '🏛️', description: 'Government jobs via web search.', enabled: true, syncFrequency: 'daily', parserVersion: '2.0.0' },
   ]
   const sourceMap: Record<string, string> = {}
   for (const s of sources) {

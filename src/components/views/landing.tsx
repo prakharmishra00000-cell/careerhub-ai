@@ -21,7 +21,7 @@ import {
 import { formatSalary, formatStipend } from '@/lib/jobs'
 import type { JobCardData } from '@/lib/types'
 
-const sources = ['Remotive', 'Arbeitnow', 'Company Websites', 'Government Portals']
+const sources = ['LinkedIn', 'Indeed', 'Naukri', 'Internshala', 'Wellfound', 'Glassdoor', 'Remotive', 'Arbeitnow', 'RemoteOK', 'Jobicy', 'Company Websites', 'Government Portals']
 
 const quickFilters = [
   { label: 'Jobs', icon: Briefcase, filter: { employmentType: ['full_time'] } },
