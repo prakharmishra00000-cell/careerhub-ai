@@ -41,101 +41,17 @@ export function matchesTextQuery(title: string, description: string, tags: strin
   const q = query.toLowerCase().trim()
   const t = title.toLowerCase()
   const tagStr = tags.join(' ').toLowerCase()
-  const d = description.toLowerCase()
 
-  // Direct substring match on TITLE and TAGS only — NOT description (too many false positives)
+  // Simple: match the query as a substring in title or tags ONLY
   if (t.includes(q) || tagStr.includes(q)) return true
 
-  // Graduate Engineer Trainee / GET / Trainee queries
-  if (/graduate\s+engineer|engineer\s+trainee|\bget\b|management\s+trainee|executive\s+trainee|graduate\s+trainee/i.test(q)) {
-    const isTrainee = /trainee|graduate|entry\s+level|fresher|\bget\b|apprentice|junior\s+engineer|associate\s+engineer/i.test(t) ||
-                      /trainee|graduate|get|fresher/i.test(tagStr) ||
-                      /graduate\s+engineer\s+trainee|\bget\b|entry\s+level\s+trainee/i.test(d)
-    const isExcludedSenior = /senior|lead|principal|architect|staff/i.test(t)
-    return isTrainee && !isExcludedSenior
+  // Multi-word: check if ALL words appear in title
+  const words = q.split(/\s+/).filter((w) => w.length > 2)
+  if (words.length > 1) {
+    return words.every((w) => t.includes(w))
   }
 
-  // UI / UX / Product Design queries
-  if (/ui[\s/_-]?ux|ux[\s/_-]?ui|product\s+design|designer|figma|graphic/i.test(q)) {
-    return (
-      /ui[\s/_-]?ux|ux[\s/_-]?ui|product\s+designer|web\s*designer|graphic\s+designer|motion\s+designer|interaction\s+designer|designer|figma/i.test(t) ||
-      /ui[\s/_-]?ux|ux[\s/_-]?ui|product\s+design|figma|design/i.test(tagStr) ||
-      (/figma|user\s+experience|user\s+interface|wireframe|prototype/i.test(d) && /design/i.test(t))
-    )
-  }
-
-  // Mechanical / Automobile / Production
-  if (/mechanical|automobile|automotive|production\s+engineer|manufacturing\s+engineer|thermal|hvac|cad\s+engineer|solidworks/i.test(q)) {
-    return (
-      /mechanical|automobile|automotive|production|manufacturing|thermal|hvac|solidworks|autocad|catia|piping|mechatronics|aerospace/i.test(t) ||
-      /mechanical|automobile|production|manufacturing|cad|solidworks/i.test(tagStr)
-    )
-  }
-
-  // Civil / Structural / Construction / Infrastructure
-  if (/civil|structural|construction|site\s+engineer|staad|surveyor|geotechnical|infrastructure/i.test(q)) {
-    return (
-      /civil|structural|construction|site\s+engineer|staad|surveyor|geotechnical|infrastructure|highway|bridge/i.test(t) ||
-      /civil|structural|construction|surveying/i.test(tagStr) ||
-      (/civil\s+engineering|structural\s+analysis|construction\s+site/i.test(d) && !/software/i.test(t))
-    )
-  }
-
-  // Electrical / Power / Automation / EEE
-  if (/electrical|power\s+system|substation|plc|scada|transformer|switchgear|\beee\b/i.test(q)) {
-    return (
-      /electrical|power\s+system|substation|plc|scada|transformer|switchgear|high\s+voltage|\beee\b/i.test(t) ||
-      /electrical|power|plc|scada/i.test(tagStr)
-    )
-  }
-
-  // Electronics / ECE / VLSI / Embedded / IoT
-  if (/electronic|\bece\b|vlsi|embedded|iot|pcb|microcontroller|fpga|firmware|semiconductor/i.test(q)) {
-    return (
-      /electronic|\bece\b|vlsi|embedded|iot|pcb|microcontroller|fpga|firmware|semiconductor|hardware\s+engineer|rtl/i.test(t) ||
-      /electronics|embedded|iot|vlsi|pcb/i.test(tagStr)
-    )
-  }
-
-  // Chemical / Process / Petroleum / Refinery
-  if (/chemical|petrochemical|refinery|process\s+engineer|distillation|polymer/i.test(q)) {
-    return (
-      /chemical|petrochemical|refinery|process\s+engineer|distillation|polymer|plant\s+engineer/i.test(t) ||
-      /chemical|refinery|petrochemical/i.test(tagStr)
-    )
-  }
-
-  // Finance / Accounting / Auditing
-  if (/finance|financial|accountant|accounting|\bca\b|audit|tax|treasury|investment\s+banking/i.test(q)) {
-    return (
-      /finance|financial|accountant|accounting|\bca\b|audit|taxation|treasury|investment\s+banking|equity\s+research/i.test(t) ||
-      /finance|accounting|audit|tax/i.test(tagStr)
-    )
-  }
-
-  // HR / Recruitment / Talent
-  if (/\bhr\b|human\s+resources|recruiter|recruitment|talent\s+acquisition|people\s+ops/i.test(q)) {
-    return (
-      /\bhr\b|human\s+resources|recruiter|recruitment|talent\s+acquisition|people\s+operations|staffing/i.test(t) ||
-      /hr|recruitment|talent/i.test(tagStr)
-    )
-  }
-
-  // Marketing / SEO / Sales / BD
-  if (/marketing|seo|growth|campaign|social\s+media|sales|business\s+development|\bbd\b/i.test(q)) {
-    return (
-      /marketing|seo|growth|campaign|social\s+media|sales|business\s+development|\bbd\b|content\s+writer/i.test(t) ||
-      /marketing|sales|growth|seo/i.test(tagStr)
-    )
-  }
-
-  // General token matching
-  const stopWords = new Set(['in', 'and', 'or', 'for', 'with', 'at', 'to', 'the', 'a', 'an', 'of', 'on', 'by', 'job', 'jobs', 'role', 'roles'])
-  const tokens = q.split(/\s+/).filter((w) => w.length > 2 && !stopWords.has(w))
-  if (tokens.length === 0) return true
-
-  const matches = tokens.filter((tok) => allText.includes(tok))
-  return matches.length >= Math.ceil(tokens.length * 0.7)
+  return false
 }
 
 function inferBranch(title: string, desc: string): string {
