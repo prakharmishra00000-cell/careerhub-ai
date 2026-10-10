@@ -139,10 +139,21 @@ export async function GET(req: NextRequest) {
     if (jobs.length === 0) {
       let filtered = [...fetchedLiveJobs]
 
-      // Branch filter
+      // KEYWORD filter — match on title and company name only, NOT description
+      if (filter.q && filter.q.trim()) {
+        const q = filter.q.toLowerCase().trim()
+        filtered = filtered.filter((j) =>
+          (j.title && j.title.toLowerCase().includes(q)) ||
+          (j.companyName && j.companyName.toLowerCase().includes(q)) ||
+          (j.skills && j.skills.some((s) => s.toLowerCase().includes(q))) ||
+          (j.branch && j.branch.toLowerCase().includes(q))
+        )
+      }
+
+      // Branch filter — only keep jobs that MATCH, don't include jobs with no branch
       if (filter.branch && filter.branch.length > 0) {
         filtered = filtered.filter((j) => {
-          if (!j.branch) return true
+          if (!j.branch) return false
           return filter.branch!.some((b) => (j.branch || '').toLowerCase().includes(b.toLowerCase()))
         })
       }

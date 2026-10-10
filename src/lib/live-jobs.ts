@@ -42,9 +42,8 @@ export function matchesTextQuery(title: string, description: string, tags: strin
   const t = title.toLowerCase()
   const tagStr = tags.join(' ').toLowerCase()
   const d = description.toLowerCase()
-  const allText = `${t} ${tagStr} ${d}`
 
-  // Direct substring match
+  // Direct substring match on TITLE and TAGS only — NOT description (too many false positives)
   if (t.includes(q) || tagStr.includes(q)) return true
 
   // Graduate Engineer Trainee / GET / Trainee queries
@@ -69,8 +68,7 @@ export function matchesTextQuery(title: string, description: string, tags: strin
   if (/mechanical|automobile|automotive|production\s+engineer|manufacturing\s+engineer|thermal|hvac|cad\s+engineer|solidworks/i.test(q)) {
     return (
       /mechanical|automobile|automotive|production|manufacturing|thermal|hvac|solidworks|autocad|catia|piping|mechatronics|aerospace/i.test(t) ||
-      /mechanical|automobile|production|manufacturing|cad|solidworks/i.test(tagStr) ||
-      (/mechanical|cad|solidworks|thermodynamics/i.test(d) && !/software\s+engineer/i.test(t))
+      /mechanical|automobile|production|manufacturing|cad|solidworks/i.test(tagStr)
     )
   }
 
