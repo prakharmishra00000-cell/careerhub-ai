@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
     }
 
     const page = Math.max(1, filter.page ?? 1)
-    const pageSize = Math.min(50, Math.max(1, filter.pageSize ?? 20))
+    const pageSize = Math.min(100, Math.max(1, filter.pageSize ?? 20))
 
     let fetchedLiveJobs: NormalizedLiveJob[] = []
     try {
@@ -214,13 +214,13 @@ export async function GET(req: NextRequest) {
     }
 
     const facets = {
-      sources: Object.keys(sourceCounts).length ? sourceCounts : { LinkedIn: 15, Indeed: 12, Jobicy: 8, Arbeitnow: 6, Remotive: 5 },
-      employmentTypes: Object.keys(empCounts).length ? empCounts : { full_time: 25, internship: 12, trainee: 8, contract: 6 },
-      remoteTypes: Object.keys(remoteCounts).length ? remoteCounts : { remote: 22, hybrid: 14, onsite: 10 },
-      degrees: { BTech: 28, BE: 15, MCA: 10, BSc: 8, Diploma: 6 },
-      branches: Object.keys(branchCounts).length ? branchCounts : { Mechanical: 10, Civil: 8, Electrical: 8, 'ECE / IoT': 7, Chemical: 6, 'Engineering (GET)': 6, 'Design & UI/UX': 8, 'CSE / IT': 25 },
-      cities: { Bangalore: 18, Hyderabad: 14, Pune: 10, Mumbai: 8, Delhi: 6, Remote: 22 },
-      companyTypes: { product: 20, startup: 18, mnc: 12, psu: 6 },
+      sources: sourceCounts,
+      employmentTypes: empCounts,
+      remoteTypes: remoteCounts,
+      degrees: {},
+      branches: branchCounts,
+      cities: {},
+      companyTypes: {},
     }
 
     return NextResponse.json({

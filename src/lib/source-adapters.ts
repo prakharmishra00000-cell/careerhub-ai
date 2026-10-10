@@ -132,40 +132,98 @@ export async function fetchJobicy(): Promise<FetchedJob[]> {
 // job listings from LinkedIn, Naukri, Indeed, Internshala, Unstop,
 // Wellfound, Glassdoor, Company Websites, and Government Portals
 // ============================================================
-async function fetchJobsViaWebSearch(query: string, platform: string, sourceName: string): Promise<FetchedJob[]> {
+
+// Multiple search queries per platform to get MORE jobs
+const SEARCH_KEYWORDS = [
+  'software engineer', 'data scientist', 'mechanical engineer', 'civil engineer',
+  'electrical engineer', 'backend developer', 'frontend developer', 'full stack developer',
+  'product manager', 'business analyst', 'devops engineer', 'data analyst',
+  'machine learning engineer', 'cloud engineer', 'cybersecurity analyst',
+  'mobile developer', 'UI UX designer', 'internship', 'fresher',
+  'government job', 'apprenticeship', 'marketing', 'HR',
+]
+
+async function fetchJobsViaWebSearch(platform: string, sourceName: string): Promise<FetchedJob[]> {
   try {
     const ZAI = (await import('z-ai-web-dev-sdk')).default
     const zai = await ZAI.create()
-    const results: any = await (zai as any).functions?.invoke?.('web_search', { query, num: 15 }) ||
-      await (zai as any).web_search?.({ query, num: 15 }) ||
-      []
-    const arr = Array.isArray(results) ? results : (results?.results || [])
+    const allJobs: FetchedJob[] = []
 
-    const jobs: FetchedJob[] = arr
-      .filter((r: any) => r?.url && r?.name)
-      .filter((r: any) => {
-        // Only keep actual job-related pages
-        const url = r.url.toLowerCase()
-        return url.includes('/jobs') || url.includes('/job/') || url.includes('/view/') ||
-               url.includes('/internship') || url.includes('/career') || url.includes('/listing') ||
-               url.includes(platform) || r.snippet?.includes('apply')
-      })
-      .map((r: any) => ({
-        title: (r.name || '').trim().slice(0, 300) || 'Untitled',
-        companyName: extractCompanyFromSnippet(r.snippet || r.name || ''),
-        description: (r.snippet || '').replace(/<[^>]*>/g, '').slice(0, 3000),
-        sourceUrl: r.url,
-        city: extractLocationFromSnippet(r.snippet || ''),
-        country: 'India',
-        remoteType: /remote|work from home|wfh/i.test(r.snippet || '') ? 'remote' : 'onsite',
-        employmentType: /intern|internship/i.test(r.snippet || '') ? 'internship' : 'full_time',
-        skills: extractSkillsFromSnippet(r.snippet || ''),
-        sourceName,
-      }))
-    return jobs
+    // Search with multiple keywords to get more jobs
+    const keywords = platform.includes('internshala') ? ['internship', 'software intern', 'data science intern', 'marketing intern', 'hr intern', 'content writing intern'] :
+      platform.includes('government') ? ['government job engineer', 'government job 2026', 'psu recruitment', 'bank job', 'railway job'] :
+      SEARCH_KEYWORDS
+
+    for (const kw of keywords) {
+      try {
+        const query = platform ? `site:${platform} ${kw}` : `${kw} jobs`
+        const results: any = await (zai as any).functions?.invoke?.('web_search', { query, num: 10 }) ||
+          await (zai as any).web_search?.({ query, num: 10 }) || []
+        const arr = Array.isArray(results) ? results : (results?.results || [])
+
+        for (const r of arr) {
+          if (!r?.url || !r?.name) continue
+          // Only keep job-related pages
+          const url = r.url.toLowerCase()
+          if (!url.includes('/jobs') && !url.includes('/job/') && !url.includes('/view/') &&
+              !url.includes('/internship') && !url.includes('/career') &&
+              !url.includes('/listing') && !url.includes(platform) &&
+              !r.snippet?.includes('apply') && !r.snippet?.includes('hiring')) continue
+
+          const snippet = (r.snippet || '').replace(/<[^>]*>/g, '')
+          allJobs.push({
+            title: (r.name || '').trim().slice(0, 300) || 'Untitled',
+            companyName: extractCompanyFromSnippet(snippet || r.name || ''),
+            description: snippet.slice(0, 5000),
+            sourceUrl: r.url,
+            city: extractLocationFromSnippet(snippet),
+            country: 'India',
+            remoteType: /remote|work from home|wfh/i.test(snippet) ? 'remote' : 'onsite',
+            employmentType: /intern|internship/i.test(snippet) ? 'internship' : 'full_time',
+            skills: extractSkillsFromSnippet(snippet),
+            sourceName,
+            salaryMin: extractSalaryFromSnippet(snippet),
+            salaryMax: extractSalaryFromSnippet(snippet, true),
+            salaryCurrency: 'INR',
+          })
+        }
+      } catch { /* ignore individual keyword errors */ }
+    }
+
+    // Deduplicate by sourceUrl
+    const seen = new Set<string>()
+    return allJobs.filter(j => {
+      if (seen.has(j.sourceUrl)) return false
+      seen.add(j.sourceUrl)
+      return true
+    })
   } catch {
     return []
   }
+}
+
+function extractSalaryFromSnippet(snippet: string, isMax = false): number | undefined {
+  // Try to extract salary like "₹6,00,000", "6 LPA", "6-10 LPA", "$80,000"
+  const patterns = [
+    /₹\s*(\d[\d,]+)\s*(?:-\s*(\d[\d,]+))?\s*(?:LPA|per annum|\/yr)?/i,
+    /(\d+)\s*[-–]\s*(\d+)\s*LPA/i,
+    /(\d+)\s*LPA/i,
+    /\$(\d[\d,]+)\s*(?:-\s*\$(\d[\d,]+))?/i,
+  ]
+  for (const p of patterns) {
+    const m = snippet.match(p)
+    if (m) {
+      if (isMax && m[2]) {
+        const v = parseInt(m[2].replace(/,/g, ''))
+        return v < 100 ? v * 100000 : v // Convert LPA to absolute
+      }
+      if (!isMax && m[1]) {
+        const v = parseInt(m[1].replace(/,/g, ''))
+        return v < 100 ? v * 100000 : v
+      }
+    }
+  }
+  return undefined
 }
 
 function extractCompanyFromSnippet(snippet: string): string {
@@ -199,31 +257,31 @@ function extractSkillsFromSnippet(snippet: string): string[] {
 // Fetch from each major platform via web search
 // ============================================================
 export async function fetchLinkedInJobs(): Promise<FetchedJob[]> {
-  return fetchJobsViaWebSearch('site:linkedin.com/jobs software engineer india 2026', 'linkedin.com', 'LinkedIn')
+  return fetchJobsViaWebSearch('linkedin.com', 'LinkedIn')
 }
 
 export async function fetchIndeedJobs(): Promise<FetchedJob[]> {
-  return fetchJobsViaWebSearch('site:indeed.com software engineer jobs india', 'indeed.com', 'Indeed')
+  return fetchJobsViaWebSearch('indeed.com', 'Indeed')
 }
 
 export async function fetchNaukriJobs(): Promise<FetchedJob[]> {
-  return fetchJobsViaWebSearch('site:naukri.com software engineer job listing', 'naukri.com', 'Naukri')
+  return fetchJobsViaWebSearch('naukri.com', 'Naukri')
 }
 
 export async function fetchInternshalaJobs(): Promise<FetchedJob[]> {
-  return fetchJobsViaWebSearch('site:internshala.com internship software engineering', 'internshala.com', 'Internshala')
+  return fetchJobsViaWebSearch('internshala.com', 'Internshala')
 }
 
 export async function fetchGlassdoorJobs(): Promise<FetchedJob[]> {
-  return fetchJobsViaWebSearch('site:glassdoor.com software engineer jobs', 'glassdoor.com', 'Glassdoor')
+  return fetchJobsViaWebSearch('glassdoor.com', 'Glassdoor')
 }
 
 export async function fetchWellfoundJobs(): Promise<FetchedJob[]> {
-  return fetchJobsViaWebSearch('site:wellfound.com software engineer startup jobs', 'wellfound.com', 'Wellfound')
+  return fetchJobsViaWebSearch('wellfound.com', 'Wellfound')
 }
 
 export async function fetchGovernmentJobs(): Promise<FetchedJob[]> {
-  return fetchJobsViaWebSearch('government jobs india engineer recruitment 2026', 'gov.in', 'Government Portal')
+  return fetchJobsViaWebSearch('gov.in', 'Government Portal')
 }
 
 // ============================================================
@@ -326,7 +384,9 @@ export async function syncJobsToDatabase(sourceName: string, jobs: FetchedJob[])
           employmentType: j.employmentType || 'full_time',
           skills: j.skills?.join(', ') || null,
           salaryCurrency: j.salaryCurrency || 'USD',
-          salaryDisclosed: false,
+          salaryMin: j.salaryMin ? Number(j.salaryMin) : null,
+          salaryMax: j.salaryMax ? Number(j.salaryMax) : null,
+          salaryDisclosed: !!(j.salaryMin || j.salaryMax),
           fresherFriendly: /junior|fresher|entry|intern/i.test(j.title),
           isDemo: false,
           status: 'active',

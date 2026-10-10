@@ -170,7 +170,7 @@ async function fetchFromJSearch(filter: JobFilter): Promise<NormalizedLiveJob[]>
     const params = new URLSearchParams({
       query,
       page: String(filter.page || 1),
-      num_pages: '2',
+      num_pages: '3',
       date_posted: 'month',
     })
 
