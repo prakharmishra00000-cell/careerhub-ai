@@ -37,21 +37,21 @@ const quickFilters = [
 ]
 
 const features = [
-  { icon: Filter, title: 'Powerful combinable filters', desc: 'Degree, branch, CGPA, backlog policy, experience, salary, stipend, source, company type — combine any filters. URLs are shareable.' },
-  { icon: Bot, title: 'AI-powered matching', desc: 'Natural-language search → structured filters. Explainable match scores that never fabricate eligibility.' },
+  { icon: Filter, title: 'Powerful combinable filters', desc: 'Degree, branch, CGPA, backlog policy, experience, salary, source, company type — combine any filters. URLs are shareable.' },
+  { icon: Bot, title: 'AI-powered job search', desc: 'Natural-language search → structured filters → live results from LinkedIn, Naukri, Indeed, Internshala and more.' },
   { icon: Sparkles, title: 'Fresher-friendly by design', desc: 'Explicit fresher-friendly flag, honest "not specified" labels for backlogs & CGPA — never confuse missing with "no requirement".' },
-  { icon: FileText, title: 'Resume analyzer + builder', desc: 'ATS scoring, missing keywords, actionable suggestions. Multiple professional templates. Never fabricates experience.' },
   { icon: ClipboardList, title: 'Application tracker', desc: 'Kanban-style pipeline: Saved → Applied → Assessment → Interview → Offer. Notes, deadlines, interview dates.' },
   { icon: Bell, title: 'Smart job alerts', desc: 'Create alerts from any search. Instant, daily, or weekly. Email or in-app. Pause anytime.' },
+  { icon: ShieldCheck, title: 'Source attribution always', desc: 'Every job links back to its original source — LinkedIn, Naukri, Indeed, Internshala, Remotive, and more. Never claims a job is hosted here.' },
   { icon: Building2, title: 'Company directory', desc: 'Discover companies by industry, size, type. Verified badges. Open jobs count. Direct links to company sites.' },
-  { icon: ShieldCheck, title: 'Source attribution always', desc: 'Every job links back to its original source. "Apply on Remotive", "Apply on Arbeitnow" — never claims a job is hosted here.' },
+  { icon: TrendingUp, title: 'Real-time live jobs', desc: 'Jobs are fetched live from 12 sources every 10 minutes. No mock data — every listing is from a real public API or web search.' },
 ]
 
 const stats = [
-  { label: 'Opportunities indexed', value: '50K+' },
-  { label: 'Trusted sources', value: '9' },
+  { label: 'Live job sources', value: '12' },
+  { label: 'Real-time sync', value: '10 min' },
   { label: 'Degrees & branches', value: '40+' },
-  { label: 'Match accuracy', value: '92%' },
+  { label: 'No mock data', value: '100%' },
 ]
 
 const testimonials = [

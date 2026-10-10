@@ -32,22 +32,16 @@ export function Footer() {
             { label: 'Fresher jobs', view: 'freshers' as const },
             { label: 'Government jobs', view: 'government-jobs' as const },
             { label: 'Companies', view: 'companies' as const },
-            { label: 'Salary Insights', view: 'salary-insights' as const },
           ]} />
           <FooterCol title="Candidate" links={[
             { label: 'Dashboard', view: 'dashboard' as const },
             { label: 'Profile', view: 'profile' as const },
             { label: 'Saved jobs', view: 'saved' as const },
             { label: 'Applications', view: 'applications' as const },
-            { label: 'Resume tools', view: 'resume' as const },
             { label: 'Job alerts', view: 'alerts' as const },
           ]} />
-          <FooterCol title="AI & Tools" links={[
-            { label: 'AI Career Assistant', view: 'career-ai' as const },
-            { label: 'Resume analyzer', view: 'resume' as const },
-            { label: 'Interview Prep', view: 'interview-prep' as const },
-            { label: 'Career Roadmap', view: 'career-roadmap' as const },
-            { label: 'Skill Gap Analysis', view: 'skill-gap' as const },
+          <FooterCol title="Tools" links={[
+            { label: 'AI Job Search', view: 'career-ai' as const },
             { label: 'Recruiter portal', view: 'recruiter' as const },
           ]} />
         </div>

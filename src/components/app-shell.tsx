@@ -11,16 +11,10 @@ import { ProfileView } from '@/components/views/profile'
 import { SavedView } from '@/components/views/saved'
 import { ApplicationsView } from '@/components/views/applications'
 import { AlertsView } from '@/components/views/alerts'
-import { ResumeView } from '@/components/views/resume'
 import { CareerAIView } from '@/components/views/career-ai'
 import { CompaniesView } from '@/components/views/companies'
 import { CompanyDetailsView } from '@/components/views/company-details'
-import { SalaryInsightsView } from '@/components/views/salary-insights'
-import { InterviewPrepView } from '@/components/views/interview-prep'
-import { CareerRoadmapView } from '@/components/views/career-roadmap'
-import { SkillGapView } from '@/components/views/skill-gap'
 import { RecruiterView } from '@/components/views/recruiter'
-import { AdminView } from '@/components/views/admin'
 import { SettingsView } from '@/components/views/settings'
 import { TopNav } from '@/components/top-nav'
 import { MobileBottomNav } from '@/components/mobile-bottom-nav'
@@ -63,7 +57,7 @@ export function AppShell() {
       const [view, id] = h.split('/')
       if (view && view !== useApp.getState().view) {
         // only accept known views
-        const known = ['landing', 'search', 'job', 'dashboard', 'profile', 'profile-edit', 'saved', 'applications', 'alerts', 'resume', 'resume-analyzer', 'resume-builder', 'career-ai', 'companies', 'company', 'recruiter', 'recruiter-jobs', 'recruiter-new-job', 'recruiter-applications', 'admin', 'admin-users', 'admin-jobs', 'admin-sources', 'admin-companies', 'admin-reports', 'admin-analytics', 'settings', 'internships', 'remote-jobs', 'freshers', 'government-jobs', 'salary-insights', 'interview-prep', 'career-roadmap', 'skill-gap']
+        const known = ['landing', 'search', 'job', 'dashboard', 'profile', 'profile-edit', 'saved', 'applications', 'alerts', 'career-ai', 'companies', 'company', 'recruiter', 'recruiter-jobs', 'recruiter-new-job', 'recruiter-applications', 'settings', 'internships', 'remote-jobs', 'freshers', 'government-jobs']
         if (known.includes(view)) {
           useApp.getState().setView(view as any)
           if (id) {
@@ -138,37 +132,22 @@ export function AppShell() {
     case 'saved': content = <SavedView />; break
     case 'applications': content = <ApplicationsView />; break
     case 'alerts': content = <AlertsView />; break
-    case 'resume':
-    case 'resume-analyzer':
-    case 'resume-builder': content = <ResumeView />; break
     case 'career-ai': content = <CareerAIView />; break
     case 'companies': content = <CompaniesView />; break
     case 'company': content = <CompanyDetailsView />; break
-    case 'salary-insights': content = <SalaryInsightsView />; break
-    case 'interview-prep': content = <InterviewPrepView />; break
-    case 'career-roadmap': content = <CareerRoadmapView />; break
-    case 'skill-gap': content = <SkillGapView />; break
     case 'recruiter':
     case 'recruiter-jobs':
     case 'recruiter-new-job':
     case 'recruiter-applications': content = <RecruiterView />; break
-    case 'admin':
-    case 'admin-users':
-    case 'admin-jobs':
-    case 'admin-sources':
-    case 'admin-companies':
-    case 'admin-reports':
-    case 'admin-analytics': content = <AdminView />; break
     case 'settings': content = <SettingsView />; break
     default: content = <LandingView />
   }
 
-  // gate recruiter/admin for unauthorized users
+  // gate recruiter for unauthorized users
   const gated = (view === 'recruiter' || view.startsWith('recruiter-')) && !(user?.role === 'recruiter' || user?.role === 'company_admin' || user?.role === 'admin')
-  const adminGated = (view === 'admin' || view.startsWith('admin-')) && user?.role !== 'admin'
-  const dashboardGated = (view === 'dashboard' || view === 'profile' || view === 'saved' || view === 'applications' || view === 'alerts' || view === 'resume') && !user
+  const dashboardGated = (view === 'dashboard' || view === 'profile' || view === 'saved' || view === 'applications' || view === 'alerts') && !user
 
-  if (gated || adminGated || dashboardGated) {
+  if (gated || dashboardGated) {
     if (!authLoading) {
       content = (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">

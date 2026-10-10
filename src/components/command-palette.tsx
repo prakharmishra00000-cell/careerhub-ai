@@ -69,12 +69,7 @@ export function CommandPalette() {
       { id: 'nav-freshers', label: 'Fresher jobs', icon: Sparkles, group: 'Navigate', action: () => go('freshers') },
       { id: 'nav-govt', label: 'Government jobs', icon: ShieldCheck, group: 'Navigate', action: () => go('government-jobs') },
       { id: 'nav-companies', label: 'Companies directory', icon: Building2, group: 'Navigate', action: () => go('companies') },
-      { id: 'nav-salary', label: 'Salary Insights', icon: TrendingUp, group: 'Navigate', action: () => go('salary-insights'), keywords: 'analytics compensation pay' },
-      { id: 'nav-interview', label: 'Interview Prep', icon: Brain, group: 'Navigate', action: () => go('interview-prep'), keywords: 'questions preparation practice tips' },
-      { id: 'nav-roadmap', label: 'Career Roadmap', icon: Map, group: 'Navigate', action: () => go('career-roadmap'), keywords: 'career path milestones growth plan' },
-      { id: 'nav-skillgap', label: 'Skill Gap Analysis', icon: Wrench, group: 'Navigate', action: () => go('skill-gap'), keywords: 'skills gap market demand learn missing' },
-      { id: 'nav-ai', label: 'AI Career Assistant', icon: Bot, group: 'Navigate', action: () => go('career-ai'), keywords: 'chat search natural language' },
-      { id: 'nav-resume', label: 'Resume tools', icon: FileText, group: 'Navigate', action: () => go('resume'), keywords: 'analyzer builder ats' },
+      { id: 'nav-ai', label: 'AI Job Search', icon: Bot, group: 'Navigate', action: () => go('career-ai'), keywords: 'chat search natural language' },
     ]
 
     if (user) {

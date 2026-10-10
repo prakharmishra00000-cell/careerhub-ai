@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
       replyNote = " I searched for jobs matching your keyword."
     }
 
-    // Run the search
+    // Run the search in DB first
     const where = buildJobWhere(merged)
     const orderBy = buildJobOrderBy(merged)
     const rows = await db.job.findMany({
@@ -140,8 +140,87 @@ export async function POST(req: NextRequest) {
       take: 20,
       include: { source: true, company: true },
     })
-    const jobs: JobCardData[] = rows.map((j: any) => jobToCard(j))
-    const total = jobs.length
+    let jobs: JobCardData[] = rows.map((j: any) => jobToCard(j))
+    let total = jobs.length
+
+    // If few or no DB results, also do live web search for real-time jobs
+    if (total < 5) {
+      try {
+        const { syncJobsToDatabase } = await import('@/lib/source-adapters')
+        const ZAI = (await import('z-ai-web-dev-sdk')).default
+        const zai = await ZAI.create()
+        const searchQuery = merged.q || message
+        const webResults: any = await (zai as any).functions?.invoke?.('web_search', { query: searchQuery + ' jobs', num: 10 }) ||
+          await (zai as any).web_search?.({ query: searchQuery + ' jobs', num: 10 }) || []
+        const arr = Array.isArray(webResults) ? webResults : (webResults?.results || [])
+        const fetchedJobs = arr
+          .filter((r: any) => r?.url && r?.name)
+          .map((r: any) => ({
+            title: (r.name || '').trim().slice(0, 300),
+            companyName: 'Various',
+            description: (r.snippet || '').slice(0, 3000),
+            sourceUrl: r.url,
+            city: 'Not specified',
+            country: 'Worldwide',
+            remoteType: 'remote',
+            employmentType: 'full_time',
+            skills: [],
+            sourceName: 'Web Search',
+          }))
+        if (fetchedJobs.length > 0) {
+          // Persist to DB for future searches
+          await syncJobsToDatabase('Web Search', fetchedJobs as any).catch(() => {})
+          // Merge with DB results (deduplicate by sourceUrl)
+          const existingUrls = new Set(jobs.map(j => j.sourceUrl))
+          for (const fj of fetchedJobs) {
+            if (!existingUrls.has(fj.sourceUrl)) {
+              jobs.push({
+                id: 'live-' + Math.random().toString(36).slice(2),
+                slug: 'live-' + Math.random().toString(36).slice(2),
+                title: fj.title,
+                companyName: fj.companyName,
+                companyLogoUrl: null,
+                companyVerified: false,
+                companyId: null,
+                city: fj.city,
+                state: null,
+                country: fj.country,
+                remoteType: fj.remoteType,
+                employmentType: fj.employmentType,
+                experienceMin: null,
+                experienceMax: null,
+                fresherFriendly: false,
+                salaryMin: null,
+                salaryMax: null,
+                salaryCurrency: 'USD',
+                salaryPeriod: null,
+                salaryDisclosed: false,
+                degree: null,
+                branch: null,
+                skills: fj.skills,
+                isInternship: false,
+                internshipDurationMonths: null,
+                internshipPaid: null,
+                stipendMin: null,
+                stipendMax: null,
+                ppoAvailable: false,
+                backlogPolicy: null,
+                cgpaRequirement: null,
+                postedAt: new Date().toISOString(),
+                applicationDeadline: null,
+                lastVerifiedAt: new Date().toISOString(),
+                sourceName: fj.sourceName,
+                sourceUrl: fj.sourceUrl,
+                isDemo: false,
+                viewCount: 0,
+                applicationCount: 0,
+              } as JobCardData)
+            }
+          }
+          total = jobs.length
+        }
+      } catch { /* ignore web search errors */ }
+    }
 
     // Generate friendly explanation via second LLM call
     let reply = ''

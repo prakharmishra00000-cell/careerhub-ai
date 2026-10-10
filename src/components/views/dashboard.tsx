@@ -462,8 +462,8 @@ function SalaryTrendsWidget({ branch }: { branch?: string | null }) {
             <p className="text-[11px] text-muted-foreground">{branch ? `For ${branch}` : 'Across all branches'}</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setView('salary-insights')}>
-          Details <ArrowRight className="size-3" />
+        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setView('search')}>
+          Browse jobs <ArrowRight className="size-3" />
         </Button>
       </div>
       {loading ? (
@@ -658,11 +658,9 @@ function QuickActionsCard() {
   const setView = useApp((s) => s.setView)
   const actions = [
     { icon: Search, label: 'Search jobs', view: 'search' as const, color: 'bg-primary/10 text-primary' },
-    { icon: Bot, label: 'AI Assistant', view: 'career-ai' as const, color: 'bg-violet-500/10 text-violet-500' },
-    { icon: FileText, label: 'Resume tools', view: 'resume' as const, color: 'bg-emerald-500/10 text-emerald-500' },
-    { icon: Brain, label: 'Interview prep', view: 'interview-prep' as const, color: 'bg-amber-500/10 text-amber-500' },
-    { icon: Map, label: 'Career roadmap', view: 'career-roadmap' as const, color: 'bg-rose-500/10 text-rose-500' },
-    { icon: Wrench, label: 'Skill gap', view: 'skill-gap' as const, color: 'bg-blue-500/10 text-blue-500' },
+    { icon: Bot, label: 'AI Job Search', view: 'career-ai' as const, color: 'bg-violet-500/10 text-violet-500' },
+    { icon: Briefcase, label: 'Companies', view: 'companies' as const, color: 'bg-blue-500/10 text-blue-500' },
+    { icon: Bell, label: 'Job alerts', view: 'alerts' as const, color: 'bg-amber-500/10 text-amber-500' },
   ]
   return (
     <Card className="p-5 mb-6">
