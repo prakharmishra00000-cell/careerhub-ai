@@ -74,6 +74,62 @@ export async function fetchArbeitnow(): Promise<FetchedJob[]> {
 }
 
 // ============================================================
+// RemoteOK — Free remote jobs API (no key needed)
+// https://remoteok.com/api
+// ============================================================
+export async function fetchRemoteOK(): Promise<FetchedJob[]> {
+  const url = 'https://remoteok.com/' + 'api'
+  const res = await fetch(url, { cache: 'no-store' })
+  if (!res.ok) throw new Error(`RemoteOK: ${res.status}`)
+  const data = await res.json()
+  // First element is metadata, rest are jobs
+  const jobs: FetchedJob[] = (Array.isArray(data) ? data.slice(1) : []).slice(0, 50).map((j: any) => ({
+    title: j.position?.trim() || 'Untitled',
+    companyName: j.company?.trim() || 'Unknown',
+    description: (j.description || '').replace(/<[^>]*>/g, '').slice(0, 5000),
+    sourceUrl: j.url ? (j.url.startsWith('http') ? j.url : `https://remoteok.com${j.url}`) : 'https://remoteok.com',
+    city: j.location?.split(',')[0]?.trim() || 'Remote',
+    country: j.location || 'Worldwide',
+    remoteType: 'remote',
+    employmentType: 'full_time',
+    skills: j.tags?.slice(0, 8) || [],
+    sourceName: 'RemoteOK',
+    tags: j.tags || [],
+  }))
+  return jobs
+}
+
+// ============================================================
+// Fetch all sources and sync to DB
+// ============================================================
+export async function syncAllSources(): Promise<{ totalInserted: number; totalSkipped: number; totalErrors: number; sources: any[] }> {
+  const sources = [
+    { name: 'Remotive', fn: fetchRemotive },
+    { name: 'Arbeitnow', fn: fetchArbeitnow },
+    { name: 'RemoteOK', fn: fetchRemoteOK },
+  ]
+  let totalInserted = 0
+  let totalSkipped = 0
+  let totalErrors = 0
+  const results: any[] = []
+
+  for (const s of sources) {
+    try {
+      const jobs = await s.fn()
+      const res = await syncJobsToDatabase(s.name, jobs)
+      results.push({ name: s.name, fetched: jobs.length, ...res })
+      totalInserted += res.inserted
+      totalSkipped += res.skipped
+      totalErrors += res.errors
+    } catch (e: any) {
+      results.push({ name: s.name, error: e.message })
+      totalErrors++
+    }
+  }
+  return { totalInserted, totalSkipped, totalErrors, sources: results }
+}
+
+// ============================================================
 // Persist fetched jobs into the database
 // ============================================================
 export async function syncJobsToDatabase(sourceName: string, jobs: FetchedJob[]): Promise<{ inserted: number; skipped: number; errors: number }> {

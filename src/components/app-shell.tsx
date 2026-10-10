@@ -43,6 +43,18 @@ export function AppShell() {
   // load session on mount
   useEffect(() => { refreshUser() }, [refreshUser])
 
+  // auto-sync jobs from live APIs on mount + every 10 minutes
+  useEffect(() => {
+    const sync = () => {
+      fetch('/api/cron/sync', { method: 'GET' }).catch(() => {})
+    }
+    // Sync immediately on load
+    sync()
+    // Then every 10 minutes
+    const interval = setInterval(sync, 10 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [])
+
   // sync URL hash <-> view
   useEffect(() => {
     const applyHash = () => {

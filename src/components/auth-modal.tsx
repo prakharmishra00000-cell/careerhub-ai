@@ -13,9 +13,8 @@ import { Badge } from '@/components/ui/badge'
 import { Compass, Sparkles, ShieldCheck, Building2, Loader2 } from 'lucide-react'
 
 const demoAccounts = [
-  { email: 'candidate@demo.careerhub.ai', role: 'Candidate', icon: Sparkles, desc: 'BTech CSE fresher, full-stack + AI' },
-  { email: 'recruiter@demo.careerhub.ai', role: 'Recruiter', icon: Building2, desc: 'Posts & manages jobs at TechVedika' },
-  { email: 'admin@demo.careerhub.ai', role: 'Admin', icon: ShieldCheck, desc: 'Full platform admin access' },
+  { email: 'candidate@demo.careerhub.ai', role: 'Candidate', icon: Sparkles, desc: 'BTech CSE fresher, full-stack & AI' },
+  { email: 'recruiter@demo.careerhub.ai', role: 'Recruiter', icon: Building2, desc: 'Posts & manages jobs' },
 ]
 
 export function AuthModal() {

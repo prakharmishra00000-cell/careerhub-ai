@@ -70,11 +70,6 @@ export function TopNav() {
                 Recruiter
               </button>
             )}
-            {user?.role === 'admin' && (
-              <button onClick={() => go('admin')} className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${view.startsWith('admin') ? 'text-primary bg-accent' : 'text-muted-foreground'}`}>
-                Admin
-              </button>
-            )}
           </nav>
 
           {/* Right actions */}
@@ -121,9 +116,6 @@ export function TopNav() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => go('recruiter')}><Building2 className="size-4 mr-2" /> Recruiter portal</DropdownMenuItem>
                     </>
-                  )}
-                  {user.role === 'admin' && (
-                    <DropdownMenuItem onClick={() => go('admin')}><ShieldCheck className="size-4 mr-2" /> Admin dashboard</DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logout()} className="text-destructive focus:text-destructive"><LogOut className="size-4 mr-2" /> Sign out</DropdownMenuItem>

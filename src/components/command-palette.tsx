@@ -91,9 +91,6 @@ export function CommandPalette() {
       if (user.role === 'recruiter' || user.role === 'company_admin' || user.role === 'admin') {
         items.push({ id: 'acc-recruiter', label: 'Recruiter portal', icon: Building2, group: 'Account', action: () => go('recruiter') })
       }
-      if (user.role === 'admin') {
-        items.push({ id: 'acc-admin', label: 'Admin dashboard', icon: ShieldCheck, group: 'Account', action: () => go('admin') })
-      }
     } else {
       items.push(
         { id: 'acc-login', label: 'Sign in', icon: LogOut, group: 'Account', action: () => { openA('login'); setOpen(false) } },

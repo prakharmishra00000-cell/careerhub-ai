@@ -49,7 +49,6 @@ export function Footer() {
             { label: 'Career Roadmap', view: 'career-roadmap' as const },
             { label: 'Skill Gap Analysis', view: 'skill-gap' as const },
             { label: 'Recruiter portal', view: 'recruiter' as const },
-            { label: 'Admin', view: 'admin' as const },
           ]} />
         </div>
         <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
