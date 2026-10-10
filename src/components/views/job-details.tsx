@@ -59,7 +59,7 @@ export function JobDetailsView() {
     let active = true
     const load = async () => {
       setMatchLoading(true)
-      try { const m = await api.jobMatch(job.id); if (active) setMatch(m) }
+      try { const m = await api.jobMatch(job.id); if (active) setMatch(m as any) }
       catch { /* ignore */ }
       finally { if (active) setMatchLoading(false) }
     }
